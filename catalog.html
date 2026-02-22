@@ -18,13 +18,34 @@
   </header>
 
   <main class="page">
-    <h1 class="page-title">Movement Catalog</h1>
-    <p style="color:var(--text-muted)">Coming soon.</p>
+
+    <div class="catalog-toolbar">
+      <input type="search" id="search" placeholder="Search movements…" class="search-input">
+      <button id="sort-btn" class="btn btn-sort" title="Toggle sort order">A–Z</button>
+    </div>
+
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-pill active" data-group="All">All</button>
+      <button class="filter-pill" data-group="Chest">Chest</button>
+      <button class="filter-pill" data-group="Back">Back</button>
+      <button class="filter-pill" data-group="Shoulders">Shoulders</button>
+      <button class="filter-pill" data-group="Biceps">Biceps</button>
+      <button class="filter-pill" data-group="Triceps">Triceps</button>
+      <button class="filter-pill" data-group="Core">Core</button>
+      <button class="filter-pill" data-group="Quadriceps">Quadriceps</button>
+      <button class="filter-pill" data-group="Hamstrings">Hamstrings</button>
+      <button class="filter-pill" data-group="Glutes">Glutes</button>
+      <button class="filter-pill" data-group="Calves">Calves</button>
+      <button class="filter-pill" data-group="Full Body">Full Body</button>
+    </div>
+
+    <div id="catalog-list"></div>
+
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
-  <script>requireAuth();</script>
+  <script src="js/catalog.js"></script>
 </body>
 </html>

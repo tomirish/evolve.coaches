@@ -1,7 +1,5 @@
 # Evolve Coaches Video Library
 
-A private video library for coaches at [Evolve Strong Fitness](https://evolvestrongfitness.com). Coaches can upload training movement videos, tag them with metadata, and browse the catalog before sessions.
-
 **Status:**
 [![Live Site](https://img.shields.io/badge/Site-evolve.coaches-green)](https://tomirish.github.io/evolve.coaches/)
 [![GitHub Pages](https://img.shields.io/badge/Host-GitHub_Pages-222)](https://pages.github.com)
@@ -11,6 +9,8 @@ A private video library for coaches at [Evolve Strong Fitness](https://evolvestr
 [![CSS](https://img.shields.io/badge/CSS-1572B6?logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com)
+
+A private video library for coaches at [Evolve Strong Fitness](https://evolvestrongfitness.com). Coaches can upload training movement videos, tag them with metadata, and browse the catalog before sessions.
 
 ## Features
 - Secure login (coaches only)

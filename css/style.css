@@ -639,3 +639,53 @@ body {
   border-color: #dc2626;
   color: #dc2626;
 }
+
+/* ============================================================
+   MOBILE  (max 600px)
+   ============================================================ */
+@media (max-width: 600px) {
+  /* Hide brand name — too long for small screens */
+  .nav .brand {
+    display: none;
+  }
+
+  .nav {
+    justify-content: flex-end;
+    padding: 0 1rem;
+  }
+
+  .nav-links {
+    gap: 1rem;
+  }
+
+  .nav-links a,
+  .nav-signout {
+    font-size: 0.8125rem;
+  }
+
+  /* Reduce page padding */
+  .page {
+    padding: 1.25rem 1rem;
+  }
+
+  /* Reduce auth card padding */
+  .auth-card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  /* Larger touch targets for pills and filter buttons */
+  .pill,
+  .filter-pill {
+    padding: 0.5rem 0.875rem;
+    min-height: 44px;
+  }
+
+  /* Stack admin add form */
+  .admin-add-form {
+    flex-direction: column;
+  }
+
+  .admin-add-btn {
+    width: 100%;
+  }
+}

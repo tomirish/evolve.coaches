@@ -1,4 +1,4 @@
-# evolve.coaches
+# Evolve Coaches Video Library
 
 A private video library for coaches at [Evolve Strong Fitness](https://evolvestrongfitness.com). Coaches can upload training movement videos, tag them with metadata, and browse the catalog before sessions.
 

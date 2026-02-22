@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evolve Coaches — Upload Movement</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <a href="catalog.html" class="brand">evolve.coaches</a>
+    <div class="nav-links">
+      <a href="catalog.html">Catalog</a>
+      <a href="upload.html" class="active">Upload</a>
+      <button class="nav-signout" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <h1 class="page-title">Upload Movement</h1>
+
+    <form id="upload-form" novalidate>
+
+      <div id="error-msg" class="error hidden"></div>
+
+      <div class="field">
+        <label for="name">Movement Name <span class="required">*</span></label>
+        <input type="text" id="name" placeholder="e.g. Barbell Back Squat" required>
+      </div>
+
+      <div class="field">
+        <label>Muscle Groups</label>
+        <div class="pill-group">
+          <label class="pill"><input type="checkbox" value="Chest"> Chest</label>
+          <label class="pill"><input type="checkbox" value="Back"> Back</label>
+          <label class="pill"><input type="checkbox" value="Shoulders"> Shoulders</label>
+          <label class="pill"><input type="checkbox" value="Biceps"> Biceps</label>
+          <label class="pill"><input type="checkbox" value="Triceps"> Triceps</label>
+          <label class="pill"><input type="checkbox" value="Core"> Core</label>
+          <label class="pill"><input type="checkbox" value="Quadriceps"> Quadriceps</label>
+          <label class="pill"><input type="checkbox" value="Hamstrings"> Hamstrings</label>
+          <label class="pill"><input type="checkbox" value="Glutes"> Glutes</label>
+          <label class="pill"><input type="checkbox" value="Calves"> Calves</label>
+          <label class="pill"><input type="checkbox" value="Full Body"> Full Body</label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="comments">Comments</label>
+        <textarea id="comments" rows="3" placeholder="Coaching notes, cues, variations…"></textarea>
+      </div>
+
+      <div class="field">
+        <label>Video <span class="required">*</span></label>
+        <div class="file-drop" id="file-drop">
+          <input type="file" id="video-file" accept="video/*" required>
+          <p id="file-label">Tap to select a video</p>
+        </div>
+      </div>
+
+      <div class="progress-wrap hidden" id="progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progress-fill"></div>
+        </div>
+        <p class="progress-text" id="progress-text">Uploading…</p>
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn btn-primary">Upload Movement</button>
+
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/upload.js"></script>
+</body>
+</html>

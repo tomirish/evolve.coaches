@@ -7,8 +7,20 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <p style="padding:2rem;font-family:sans-serif;">Logged in. Catalog coming soon.</p>
-  <button onclick="signOut()" style="margin-left:2rem;" class="btn btn-primary" style="width:auto;">Sign Out</button>
+
+  <header class="nav">
+    <a href="catalog.html" class="brand">evolve.coaches</a>
+    <div class="nav-links">
+      <a href="catalog.html" class="active">Catalog</a>
+      <a href="upload.html">Upload</a>
+      <button class="nav-signout" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <h1 class="page-title">Movement Catalog</h1>
+    <p style="color:var(--text-muted)">Coming soon.</p>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/config.js"></script>

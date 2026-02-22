@@ -1,34 +1,29 @@
 requireAuth();
 
-const MUSCLE_GROUPS = [
-  'Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps',
-  'Core', 'Quadriceps', 'Hamstrings', 'Glutes', 'Calves', 'Full Body'
-];
-
 const contentEl = document.getElementById('content');
 const params    = new URLSearchParams(window.location.search);
 const id        = params.get('id');
 
 if (!id) window.location.href = 'catalog.html';
 
-let movement = null;
+let movement     = null;
+let muscleGroups = [];
 
 // ── Load ─────────────────────────────────────────────────────
 async function load() {
-  const { data, error } = await client
-    .from('movements')
-    .select('*')
-    .eq('id', id)
-    .single();
+  const [movementResult, groupsResult] = await Promise.all([
+    client.from('movements').select('*').eq('id', id).single(),
+    client.from('muscle_groups').select('name').order('name')
+  ]);
 
-  if (error || !data) {
+  if (movementResult.error || !movementResult.data) {
     contentEl.innerHTML = '<p class="status-msg error">Movement not found.</p>';
     return;
   }
 
-  movement = data;
+  movement     = movementResult.data;
+  muscleGroups = (groupsResult.data || []).map(g => g.name);
 
-  // Generate a signed URL (valid 1 hour) so the private video can be played
   const { data: signed, error: signedError } = await client.storage
     .from('videos')
     .createSignedUrl(movement.video_path, 3600);
@@ -40,6 +35,7 @@ async function load() {
 
   movement.signedUrl = signed.signedUrl;
   renderView();
+  initNav();
 }
 
 // ── View mode ────────────────────────────────────────────────
@@ -75,9 +71,9 @@ function renderView() {
 
 // ── Edit mode ────────────────────────────────────────────────
 function renderEdit() {
-  const pillsHtml = MUSCLE_GROUPS.map(g => {
+  const pillsHtml = muscleGroups.map(g => {
     const checked = (movement.muscle_groups || []).includes(g) ? 'checked' : '';
-    return `<label class="pill"><input type="checkbox" value="${g}" ${checked}> ${g}</label>`;
+    return `<label class="pill"><input type="checkbox" value="${escape(g)}" ${checked}> ${escape(g)}</label>`;
   }).join('');
 
   contentEl.innerHTML = `
@@ -150,7 +146,6 @@ async function saveChanges(e) {
     return;
   }
 
-  // Update local copy and return to view
   movement.name          = name;
   movement.muscle_groups = muscle_groups;
   movement.comments      = comments || null;

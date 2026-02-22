@@ -15,6 +15,7 @@
     <div class="nav-links">
       <a href="catalog.html">Catalog</a>
       <a href="upload.html" class="active">Upload</a>
+      <a href="admin.html" id="admin-link" class="hidden">Admin</a>
       <button class="nav-signout" onclick="signOut()">Sign Out</button>
     </div>
   </header>
@@ -33,18 +34,8 @@
 
       <div class="field">
         <label>Muscle Groups</label>
-        <div class="pill-group">
-          <label class="pill"><input type="checkbox" value="Chest"> Chest</label>
-          <label class="pill"><input type="checkbox" value="Back"> Back</label>
-          <label class="pill"><input type="checkbox" value="Shoulders"> Shoulders</label>
-          <label class="pill"><input type="checkbox" value="Biceps"> Biceps</label>
-          <label class="pill"><input type="checkbox" value="Triceps"> Triceps</label>
-          <label class="pill"><input type="checkbox" value="Core"> Core</label>
-          <label class="pill"><input type="checkbox" value="Quadriceps"> Quadriceps</label>
-          <label class="pill"><input type="checkbox" value="Hamstrings"> Hamstrings</label>
-          <label class="pill"><input type="checkbox" value="Glutes"> Glutes</label>
-          <label class="pill"><input type="checkbox" value="Calves"> Calves</label>
-          <label class="pill"><input type="checkbox" value="Full Body"> Full Body</label>
+        <div class="pill-group" id="pill-group">
+          <p class="status-msg" style="padding:0;font-size:0.875rem;">Loading…</p>
         </div>
       </div>
 

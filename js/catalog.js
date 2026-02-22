@@ -10,21 +10,31 @@ const sortBtn   = document.getElementById('sort-btn');
 const filterBar = document.getElementById('filter-bar');
 
 // ── Fetch ────────────────────────────────────────────────────
-async function loadMovements() {
+async function load() {
   listEl.innerHTML = '<p class="status-msg">Loading…</p>';
 
-  const { data, error } = await client
-    .from('movements')
-    .select('id, name, muscle_groups')
-    .order('name', { ascending: true });
+  const [movementsResult, groupsResult] = await Promise.all([
+    client.from('movements').select('id, name, muscle_groups').order('name'),
+    client.from('muscle_groups').select('name').order('name')
+  ]);
 
-  if (error) {
+  if (movementsResult.error) {
     listEl.innerHTML = '<p class="status-msg error">Failed to load movements. Please refresh.</p>';
     return;
   }
 
-  allMovements = data;
+  allMovements = movementsResult.data;
+  renderFilterPills(groupsResult.data || []);
   render();
+  initNav();
+}
+
+// ── Filter pills ─────────────────────────────────────────────
+function renderFilterPills(groups) {
+  const pills = groups.map(g =>
+    `<button class="filter-pill" data-group="${escape(g.name)}">${escape(g.name)}</button>`
+  ).join('');
+  filterBar.insertAdjacentHTML('beforeend', pills);
 }
 
 // ── Render ───────────────────────────────────────────────────
@@ -37,7 +47,6 @@ function render() {
     return matchesSearch && matchesGroup;
   });
 
-  // Sort
   filtered.sort((a, b) => {
     const cmp = a.name.localeCompare(b.name);
     return sortAsc ? cmp : -cmp;
@@ -66,6 +75,7 @@ function formatGroups(groups) {
 }
 
 function escape(str) {
+  if (!str) return '';
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -93,4 +103,4 @@ filterBar.addEventListener('click', (e) => {
 });
 
 // ── Init ─────────────────────────────────────────────────────
-loadMovements();
+load();

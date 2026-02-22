@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Evolve Coaches — Catalog</title>
+  <title>Evolve Coaches — Admin</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
@@ -13,31 +13,36 @@
   <header class="nav">
     <a href="catalog.html" class="brand">Evolve Coaches Video Library</a>
     <div class="nav-links">
-      <a href="catalog.html" class="active">Catalog</a>
+      <a href="catalog.html">Catalog</a>
       <a href="upload.html">Upload</a>
-      <a href="admin.html" id="admin-link" class="hidden">Admin</a>
+      <a href="admin.html" class="active">Admin</a>
       <button class="nav-signout" onclick="signOut()">Sign Out</button>
     </div>
   </header>
 
   <main class="page">
+    <h1 class="page-title">Admin</h1>
 
-    <div class="catalog-toolbar">
-      <input type="search" id="search" placeholder="Search movements…" class="search-input">
-      <button id="sort-btn" class="btn btn-sort" title="Toggle sort order">A–Z</button>
-    </div>
+    <section class="admin-section">
+      <h2 class="admin-section-title">Muscle Groups</h2>
 
-    <div class="filter-bar" id="filter-bar">
-      <button class="filter-pill active" data-group="All">All</button>
-    </div>
+      <form id="add-form" class="admin-add-form">
+        <input type="text" id="new-group" placeholder="New muscle group name" required>
+        <button type="submit" class="btn btn-primary admin-add-btn">Add</button>
+      </form>
 
-    <div id="catalog-list"></div>
+      <div id="error-msg" class="error hidden"></div>
+
+      <ul id="group-list" class="admin-list">
+        <li class="status-msg">Loading…</li>
+      </ul>
+    </section>
 
   </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/auth.js"></script>
-  <script src="js/catalog.js"></script>
+  <script src="js/admin.js"></script>
 </body>
 </html>

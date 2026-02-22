@@ -562,3 +562,80 @@ body {
 .btn-primary {
   flex: 2;
 }
+
+/* ============================================================
+   ADMIN PAGE
+   ============================================================ */
+.admin-section {
+  margin-bottom: 2.5rem;
+}
+
+.admin-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+}
+
+.admin-add-form {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.admin-add-form input {
+  flex: 1;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 1rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.admin-add-form input:focus {
+  border-color: var(--accent);
+}
+
+.admin-add-btn {
+  flex-shrink: 0;
+  width: auto;
+}
+
+.admin-list {
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.admin-list-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1.25rem;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  font-size: 0.9375rem;
+}
+
+.admin-list-item:last-child {
+  border-bottom: none;
+}
+
+.btn-delete {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-delete:hover {
+  border-color: #dc2626;
+  color: #dc2626;
+}

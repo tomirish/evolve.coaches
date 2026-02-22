@@ -1,20 +1,39 @@
 requireAuth();
 
-const form       = document.getElementById('upload-form');
-const errorMsg   = document.getElementById('error-msg');
-const submitBtn  = document.getElementById('submit-btn');
-const fileInput  = document.getElementById('video-file');
-const fileLabel  = document.getElementById('file-label');
+const form         = document.getElementById('upload-form');
+const errorMsg     = document.getElementById('error-msg');
+const submitBtn    = document.getElementById('submit-btn');
+const fileInput    = document.getElementById('video-file');
+const fileLabel    = document.getElementById('file-label');
 const progressWrap = document.getElementById('progress-wrap');
 const progressFill = document.getElementById('progress-fill');
 const progressText = document.getElementById('progress-text');
+const pillGroup    = document.getElementById('pill-group');
 
-// Show selected filename in the drop zone
+// ── Load muscle groups ────────────────────────────────────────
+async function loadMuscleGroups() {
+  const { data, error } = await client
+    .from('muscle_groups')
+    .select('name')
+    .order('name');
+
+  if (error || !data) {
+    pillGroup.innerHTML = '<p class="status-msg error" style="padding:0;font-size:0.875rem;">Failed to load muscle groups.</p>';
+    return;
+  }
+
+  pillGroup.innerHTML = data.map(g =>
+    `<label class="pill"><input type="checkbox" value="${escapeAttr(g.name)}"> ${escapeHtml(g.name)}</label>`
+  ).join('');
+}
+
+// ── File selection ────────────────────────────────────────────
 fileInput.addEventListener('change', () => {
   const file = fileInput.files[0];
   fileLabel.textContent = file ? file.name : 'Tap to select a video';
 });
 
+// ── Submit ────────────────────────────────────────────────────
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -25,7 +44,6 @@ form.addEventListener('submit', async (e) => {
     document.querySelectorAll('.pill-group input[type="checkbox"]:checked')
   ).map(cb => cb.value);
 
-  // Validate
   if (!name) {
     showError('Movement name is required.');
     return;
@@ -35,17 +53,14 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Lock UI
   submitBtn.disabled    = true;
   submitBtn.textContent = 'Uploading…';
   errorMsg.classList.add('hidden');
   progressWrap.classList.remove('hidden');
 
-  // Build a unique filename
   const ext      = file.name.split('.').pop();
   const filename = `${crypto.randomUUID()}.${ext}`;
 
-  // Upload video to Supabase Storage
   const { data: storageData, error: storageError } = await client.storage
     .from('videos')
     .upload(filename, file, {
@@ -62,7 +77,6 @@ form.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Insert movement record
   const session = await getSession();
   const { error: dbError } = await client
     .from('movements')
@@ -75,17 +89,16 @@ form.addEventListener('submit', async (e) => {
     });
 
   if (dbError) {
-    // Clean up the uploaded file so storage stays tidy
     await client.storage.from('videos').remove([filename]);
     showError('Failed to save movement. Please try again.');
     resetUI();
     return;
   }
 
-  // Success
   window.location.href = 'catalog.html';
 });
 
+// ── Helpers ───────────────────────────────────────────────────
 function showError(msg) {
   errorMsg.textContent = msg;
   errorMsg.classList.remove('hidden');
@@ -97,3 +110,20 @@ function resetUI() {
   progressWrap.classList.add('hidden');
   progressFill.style.width = '0%';
 }
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function escapeAttr(str) {
+  if (!str) return '';
+  return str.replace(/"/g, '&quot;');
+}
+
+// ── Init ─────────────────────────────────────────────────────
+loadMuscleGroups();
+initNav();

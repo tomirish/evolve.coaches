@@ -35,9 +35,22 @@ async function requireAdmin() {
 
 async function initNav() {
   const profile = await getProfile();
-  if (profile && profile.role === 'admin') {
+  if (!profile) return;
+
+  if (profile.role === 'admin') {
     const adminLink = document.getElementById('admin-link');
     if (adminLink) adminLink.classList.remove('hidden');
+  }
+
+  if (profile.full_name) {
+    const firstName   = profile.full_name.split(' ')[0];
+    const signOutBtn  = document.querySelector('.nav-signout');
+    if (signOutBtn) {
+      const greeting = document.createElement('span');
+      greeting.className   = 'nav-greeting';
+      greeting.textContent = `Hi, ${firstName}`;
+      signOutBtn.parentNode.insertBefore(greeting, signOutBtn);
+    }
   }
 }
 

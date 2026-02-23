@@ -25,6 +25,28 @@
     <h1 class="page-title">Account</h1>
 
     <section class="admin-section">
+      <h2 class="admin-section-title">Profile</h2>
+
+      <form id="profile-form" novalidate>
+        <div id="profile-error" class="error hidden"></div>
+        <div id="profile-success" class="success hidden"></div>
+
+        <div class="field">
+          <label for="full-name">Full Name</label>
+          <input type="text" id="full-name" autocomplete="name">
+        </div>
+
+        <div class="field">
+          <label for="email">Email</label>
+          <input type="email" id="email" autocomplete="email">
+          <p class="field-hint">Changing your email will send a confirmation to the new address.</p>
+        </div>
+
+        <button type="submit" id="profile-btn" class="btn btn-primary">Save Changes</button>
+      </form>
+    </section>
+
+    <section class="admin-section">
       <h2 class="admin-section-title">Change Password</h2>
 
       <form id="password-form" novalidate>

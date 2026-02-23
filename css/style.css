@@ -233,6 +233,12 @@ body {
   border-color: rgba(255,255,255,0.6);
 }
 
+.nav-greeting {
+  font-size: 0.875rem;
+  color: rgba(255,255,255,0.55);
+  font-weight: 400;
+}
+
 /* ============================================================
    PAGE LAYOUT
    ============================================================ */
@@ -788,6 +794,10 @@ body {
   .nav-links a,
   .nav-signout {
     font-size: 0.8125rem;
+  }
+
+  .nav-greeting {
+    display: none;
   }
 
   /* Reduce page padding */

@@ -185,3 +185,4 @@ function escape(str) {
 // ── Init ─────────────────────────────────────────────────────
 loadMovements();
 loadGroups();
+initNav();

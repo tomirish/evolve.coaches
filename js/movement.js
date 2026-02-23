@@ -89,7 +89,7 @@ async function renderEdit() {
   }).join('');
 
   contentEl.innerHTML = `
-    <video class="video-player" controls playsinline>
+    <video class="video-player" controls playsinline id="video-player">
       <source src="${movement.signedUrl}" type="video/mp4">
       Your browser does not support video playback.
     </video>
@@ -122,13 +122,35 @@ async function renderEdit() {
         <button type="submit" class="btn btn-primary" id="save-btn">Save Changes</button>
         <button type="button" class="btn btn-cancel" id="cancel-btn">Cancel</button>
       </div>
-
-      ${isAdmin ? `<button type="button" class="btn btn-danger" id="delete-btn">Delete Movement</button>` : ''}
     </form>
+
+    <section class="admin-section" style="margin-top: 2rem;">
+      <h2 class="admin-section-title">Replace Video</h2>
+      <div id="replace-error" class="error hidden"></div>
+      <div id="replace-success" class="success hidden"></div>
+      <div class="file-drop" id="replace-drop">
+        <input type="file" id="replace-file" accept="video/*">
+        <p id="replace-label">Tap to select a replacement video</p>
+      </div>
+      <div class="progress-wrap hidden" id="replace-progress-wrap">
+        <div class="progress-bar">
+          <div class="progress-fill" id="replace-progress-fill"></div>
+        </div>
+        <p class="progress-text" id="replace-progress-text">Uploading…</p>
+      </div>
+      <button type="button" class="btn btn-primary" id="replace-btn" style="margin-top: 1rem;">Replace Video</button>
+    </section>
+
+    ${isAdmin ? `<button type="button" class="btn btn-danger" id="delete-btn" style="margin-top: 0.5rem;">Delete Movement</button>` : ''}
   `;
 
   document.getElementById('cancel-btn').addEventListener('click', renderView);
   document.getElementById('edit-form').addEventListener('submit', saveChanges);
+  document.getElementById('replace-file').addEventListener('change', () => {
+    const file = document.getElementById('replace-file').files[0];
+    document.getElementById('replace-label').textContent = file ? file.name : 'Tap to select a replacement video';
+  });
+  document.getElementById('replace-btn').addEventListener('click', replaceVideo);
   if (isAdmin) {
     document.getElementById('delete-btn').addEventListener('click', deleteMovement);
   }
@@ -203,6 +225,96 @@ async function saveChanges(e) {
   movement.muscle_groups = muscle_groups;
   movement.comments      = comments || null;
   renderView();
+}
+
+// ── Replace video ────────────────────────────────────────────
+async function replaceVideo() {
+  const file          = document.getElementById('replace-file').files[0];
+  const replaceError  = document.getElementById('replace-error');
+  const replaceSuccess= document.getElementById('replace-success');
+  const replaceBtn    = document.getElementById('replace-btn');
+  const progressWrap  = document.getElementById('replace-progress-wrap');
+  const progressFill  = document.getElementById('replace-progress-fill');
+  const progressText  = document.getElementById('replace-progress-text');
+
+  replaceError.classList.add('hidden');
+  replaceSuccess.classList.add('hidden');
+
+  if (!file) {
+    replaceError.textContent = 'Please select a video file.';
+    replaceError.classList.remove('hidden');
+    return;
+  }
+
+  replaceBtn.disabled    = true;
+  replaceBtn.textContent = 'Uploading…';
+  progressWrap.classList.remove('hidden');
+
+  const ext      = file.name.split('.').pop();
+  const filename = `${crypto.randomUUID()}.${ext}`;
+
+  const { data: storageData, error: storageError } = await client.storage
+    .from('videos')
+    .upload(filename, file, {
+      onUploadProgress: (progress) => {
+        const pct = Math.round((progress.loaded / progress.total) * 100);
+        progressFill.style.width = `${pct}%`;
+        progressText.textContent = `Uploading… ${pct}%`;
+      }
+    });
+
+  if (storageError) {
+    replaceError.textContent = 'Upload failed. Please try again.';
+    replaceError.classList.remove('hidden');
+    replaceBtn.disabled    = false;
+    replaceBtn.textContent = 'Replace Video';
+    progressWrap.classList.add('hidden');
+    progressFill.style.width = '0%';
+    return;
+  }
+
+  const oldPath = movement.video_path;
+
+  const { error: dbError } = await client
+    .from('movements')
+    .update({ video_path: storageData.path })
+    .eq('id', id);
+
+  if (dbError) {
+    await client.storage.from('videos').remove([filename]);
+    replaceError.textContent = 'Failed to save. Please try again.';
+    replaceError.classList.remove('hidden');
+    replaceBtn.disabled    = false;
+    replaceBtn.textContent = 'Replace Video';
+    progressWrap.classList.add('hidden');
+    progressFill.style.width = '0%';
+    return;
+  }
+
+  await client.storage.from('videos').remove([oldPath]);
+  movement.video_path = storageData.path;
+
+  const { data: signed } = await client.storage
+    .from('videos')
+    .createSignedUrl(movement.video_path, 3600);
+
+  if (signed) {
+    movement.signedUrl = signed.signedUrl;
+    const videoEl = document.querySelector('#video-player source');
+    if (videoEl) {
+      videoEl.src = signed.signedUrl;
+      videoEl.parentElement.load();
+    }
+  }
+
+  progressWrap.classList.add('hidden');
+  progressFill.style.width = '0%';
+  replaceBtn.disabled    = false;
+  replaceBtn.textContent = 'Replace Video';
+  document.getElementById('replace-file').value = '';
+  document.getElementById('replace-label').textContent = 'Tap to select a replacement video';
+  replaceSuccess.textContent = 'Video replaced successfully.';
+  replaceSuccess.classList.remove('hidden');
 }
 
 // ── Helper ───────────────────────────────────────────────────

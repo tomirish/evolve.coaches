@@ -23,21 +23,28 @@
   <main class="page">
     <h1 class="page-title">Admin</h1>
 
-    <section class="admin-section">
-      <h2 class="admin-section-title">Movements</h2>
+    <div class="admin-tabs">
+      <button class="admin-tab active" data-tab="movements">Movements</button>
+      <button class="admin-tab" data-tab="tags">Tags</button>
+    </div>
+
+    <!-- Movements panel -->
+    <div id="tab-movements" class="admin-tab-panel">
+      <div class="admin-search">
+        <input type="search" id="movement-search" placeholder="Search movements…" class="search-input">
+      </div>
 
       <div id="movement-error-msg" class="error hidden"></div>
 
       <ul id="movement-list" class="admin-list">
         <li class="status-msg">Loading…</li>
       </ul>
-    </section>
+    </div>
 
-    <section class="admin-section">
-      <h2 class="admin-section-title">Muscle Groups</h2>
-
+    <!-- Tags panel -->
+    <div id="tab-tags" class="admin-tab-panel hidden">
       <form id="add-form" class="admin-add-form">
-        <input type="text" id="new-group" placeholder="New muscle group name" required>
+        <input type="text" id="new-group" placeholder="New tag name" required>
         <button type="submit" class="btn btn-primary admin-add-btn">Add</button>
       </form>
 
@@ -46,7 +53,7 @@
       <ul id="group-list" class="admin-list">
         <li class="status-msg">Loading…</li>
       </ul>
-    </section>
+    </div>
 
   </main>
 

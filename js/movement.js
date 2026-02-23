@@ -65,7 +65,7 @@ function renderView() {
     </div>
 
     <div class="detail-section">
-      <p class="detail-label">Muscle Groups</p>
+      <p class="detail-label">Tags</p>
       <div class="meta-tags">${groups}</div>
     </div>
 
@@ -109,7 +109,7 @@ async function renderEdit() {
       </div>
 
       <div class="field">
-        <label>Muscle Groups</label>
+        <label>Tags</label>
         <div class="pill-group">${pillsHtml}</div>
       </div>
 

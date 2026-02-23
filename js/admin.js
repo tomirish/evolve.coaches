@@ -1,8 +1,21 @@
 requireAdmin();
 
+let allMovements = [];
+
+// ── Tabs ──────────────────────────────────────────────────────
+document.querySelectorAll('.admin-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.admin-tab-panel').forEach(p => p.classList.add('hidden'));
+    tab.classList.add('active');
+    document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
+  });
+});
+
 // ── Movements ─────────────────────────────────────────────────
 const movementList     = document.getElementById('movement-list');
 const movementErrorMsg = document.getElementById('movement-error-msg');
+const movementSearch   = document.getElementById('movement-search');
 
 async function loadMovements() {
   movementList.innerHTML = '<li class="status-msg">Loading…</li>';
@@ -17,8 +30,21 @@ async function loadMovements() {
     return;
   }
 
+  allMovements = data;
+  applyMovementSearch();
+}
+
+function applyMovementSearch() {
+  const query    = movementSearch.value.trim().toLowerCase();
+  const filtered = query
+    ? allMovements.filter(m => m.name.toLowerCase().includes(query))
+    : allMovements;
+  renderMovements(filtered);
+}
+
+function renderMovements(data) {
   if (data.length === 0) {
-    movementList.innerHTML = '<li class="status-msg">No movements yet.</li>';
+    movementList.innerHTML = '<li class="status-msg">No movements found.</li>';
     return;
   }
 
@@ -32,6 +58,8 @@ async function loadMovements() {
     </li>
   `).join('');
 }
+
+movementSearch.addEventListener('input', applyMovementSearch);
 
 movementList.addEventListener('click', async (e) => {
   const btn = e.target.closest('.btn-delete');
@@ -59,7 +87,6 @@ movementList.addEventListener('click', async (e) => {
   }
 
   await client.storage.from('videos').remove([path]);
-
   loadMovements();
 });
 
@@ -67,13 +94,12 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' });
 }
 
-// ── Muscle Groups ─────────────────────────────────────────────
+// ── Tags ──────────────────────────────────────────────────────
 const groupList = document.getElementById('group-list');
 const addForm   = document.getElementById('add-form');
 const newInput  = document.getElementById('new-group');
 const errorMsg  = document.getElementById('error-msg');
 
-// ── Load ─────────────────────────────────────────────────────
 async function loadGroups() {
   groupList.innerHTML = '<li class="status-msg">Loading…</li>';
 
@@ -88,7 +114,7 @@ async function loadGroups() {
   }
 
   if (data.length === 0) {
-    groupList.innerHTML = '<li class="status-msg">No muscle groups yet.</li>';
+    groupList.innerHTML = '<li class="status-msg">No tags yet.</li>';
     return;
   }
 
@@ -100,7 +126,6 @@ async function loadGroups() {
   `).join('');
 }
 
-// ── Add ───────────────────────────────────────────────────────
 addForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
@@ -125,7 +150,6 @@ addForm.addEventListener('submit', async (e) => {
   loadGroups();
 });
 
-// ── Delete ────────────────────────────────────────────────────
 groupList.addEventListener('click', async (e) => {
   const btn = e.target.closest('.btn-delete');
   if (!btn) return;

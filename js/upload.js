@@ -37,9 +37,11 @@ fileInput.addEventListener('change', () => {
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const name     = document.getElementById('name').value.trim();
-  const comments = document.getElementById('comments').value.trim();
-  const file     = fileInput.files[0];
+  const name        = document.getElementById('name').value.trim();
+  const comments    = document.getElementById('comments').value.trim();
+  const altNamesRaw = document.getElementById('alt-names').value.trim();
+  const alt_names   = altNamesRaw ? altNamesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+  const file        = fileInput.files[0];
   const muscle_groups = Array.from(
     document.querySelectorAll('.pill-group input[type="checkbox"]:checked')
   ).map(cb => cb.value);
@@ -82,6 +84,7 @@ form.addEventListener('submit', async (e) => {
     .from('movements')
     .insert({
       name,
+      alt_names,
       muscle_groups,
       comments: comments || null,
       video_path: storageData.path,

@@ -44,6 +44,10 @@ function renderView() {
     ? movement.muscle_groups.map(g => `<span class="meta-tag">${escape(g)}</span>`).join('')
     : '<span class="meta-none">None listed</span>';
 
+  const altNames = (movement.alt_names || []).length > 0
+    ? movement.alt_names.map(n => `<span class="meta-tag">${escape(n)}</span>`).join('')
+    : '<span class="meta-none">None</span>';
+
   contentEl.innerHTML = `
     <video class="video-player" controls playsinline>
       <source src="${movement.signedUrl}" type="video/mp4">
@@ -53,6 +57,11 @@ function renderView() {
     <div class="detail-header">
       <h1 class="detail-title">${escape(movement.name)}</h1>
       <button class="btn btn-edit" id="edit-btn">Edit</button>
+    </div>
+
+    <div class="detail-section">
+      <p class="detail-label">Also Known As</p>
+      <div class="meta-tags">${altNames}</div>
     </div>
 
     <div class="detail-section">
@@ -91,6 +100,12 @@ function renderEdit() {
       </div>
 
       <div class="field">
+        <label for="alt-names">Alternative Names</label>
+        <input type="text" id="alt-names" value="${escape((movement.alt_names || []).join(', '))}">
+        <p class="field-hint">Other names coaches use for this movement — separate with commas.</p>
+      </div>
+
+      <div class="field">
         <label>Muscle Groups</label>
         <div class="pill-group">${pillsHtml}</div>
       </div>
@@ -115,8 +130,10 @@ function renderEdit() {
 async function saveChanges(e) {
   e.preventDefault();
 
-  const name     = document.getElementById('name').value.trim();
-  const comments = document.getElementById('comments').value.trim();
+  const name        = document.getElementById('name').value.trim();
+  const comments    = document.getElementById('comments').value.trim();
+  const altNamesRaw = document.getElementById('alt-names').value.trim();
+  const alt_names   = altNamesRaw ? altNamesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
   const muscle_groups = Array.from(
     document.querySelectorAll('.pill-group input[type="checkbox"]:checked')
   ).map(cb => cb.value);
@@ -134,7 +151,7 @@ async function saveChanges(e) {
 
   const { error } = await client
     .from('movements')
-    .update({ name, muscle_groups, comments: comments || null })
+    .update({ name, alt_names, muscle_groups, comments: comments || null })
     .eq('id', id);
 
   if (error) {
@@ -147,6 +164,7 @@ async function saveChanges(e) {
   }
 
   movement.name          = name;
+  movement.alt_names     = alt_names;
   movement.muscle_groups = muscle_groups;
   movement.comments      = comments || null;
   renderView();

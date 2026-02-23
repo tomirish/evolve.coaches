@@ -14,7 +14,7 @@ async function load() {
   listEl.innerHTML = '<p class="status-msg">Loading…</p>';
 
   const [movementsResult, groupsResult] = await Promise.all([
-    client.from('movements').select('id, name, muscle_groups').order('name'),
+    client.from('movements').select('id, name, muscle_groups, alt_names').order('name'),
     client.from('muscle_groups').select('name').order('name')
   ]);
 
@@ -23,7 +23,14 @@ async function load() {
     return;
   }
 
-  allMovements = movementsResult.data;
+  // Expand each movement into one entry per name (primary + each alt)
+  allMovements = [];
+  movementsResult.data.forEach(m => {
+    allMovements.push({ id: m.id, name: m.name, muscle_groups: m.muscle_groups, alias: null });
+    (m.alt_names || []).forEach(alt => {
+      allMovements.push({ id: m.id, name: alt, muscle_groups: m.muscle_groups, alias: m.name });
+    });
+  });
   renderFilterPills(groupsResult.data || []);
   render();
   initNav();
@@ -53,7 +60,10 @@ function render() {
   });
 
   if (filtered.length === 0) {
-    listEl.innerHTML = '<p class="status-msg">No movements found.</p>';
+    const msg = allMovements.length === 0
+      ? 'No movements yet. <a href="upload.html">Upload the first one.</a>'
+      : 'No movements match your search.';
+    listEl.innerHTML = `<p class="status-msg">${msg}</p>`;
     return;
   }
 
@@ -61,6 +71,7 @@ function render() {
     <a href="movement.html?id=${m.id}" class="movement-card">
       <div class="movement-card-body">
         <span class="movement-name">${escape(m.name)}</span>
+        ${m.alias ? `<span class="movement-alias">→ ${escape(m.alias)}</span>` : ''}
         <span class="movement-groups">${formatGroups(m.muscle_groups)}</span>
       </div>
       <span class="movement-arrow">›</span>

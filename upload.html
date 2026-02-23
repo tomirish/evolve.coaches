@@ -22,6 +22,7 @@
 
   <main class="page">
     <h1 class="page-title">Upload Movement</h1>
+    <p class="page-subtitle">Add a new movement video to the library.</p>
 
     <form id="upload-form" novalidate>
 
@@ -30,6 +31,12 @@
       <div class="field">
         <label for="name">Movement Name <span class="required">*</span></label>
         <input type="text" id="name" placeholder="e.g. Barbell Back Squat" required>
+      </div>
+
+      <div class="field">
+        <label for="alt-names">Alternative Names</label>
+        <input type="text" id="alt-names" placeholder="e.g. RDL, Stiff-leg deadlift">
+        <p class="field-hint">Other names coaches use for this movement — separate with commas.</p>
       </div>
 
       <div class="field">

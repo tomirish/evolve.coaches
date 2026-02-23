@@ -1,5 +1,73 @@
 requireAdmin();
 
+// ── Movements ─────────────────────────────────────────────────
+const movementList     = document.getElementById('movement-list');
+const movementErrorMsg = document.getElementById('movement-error-msg');
+
+async function loadMovements() {
+  movementList.innerHTML = '<li class="status-msg">Loading…</li>';
+
+  const { data, error } = await client
+    .from('movements')
+    .select('id, name, video_path, created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    movementList.innerHTML = '<li class="status-msg error">Failed to load movements. Please refresh.</li>';
+    return;
+  }
+
+  if (data.length === 0) {
+    movementList.innerHTML = '<li class="status-msg">No movements yet.</li>';
+    return;
+  }
+
+  movementList.innerHTML = data.map(m => `
+    <li class="admin-list-item">
+      <div>
+        <div>${escape(m.name)}</div>
+        <div class="admin-item-date">${formatDate(m.created_at)}</div>
+      </div>
+      <button class="btn-delete" data-id="${m.id}" data-name="${escape(m.name)}" data-path="${escape(m.video_path)}">Delete</button>
+    </li>
+  `).join('');
+}
+
+movementList.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-delete');
+  if (!btn) return;
+
+  const { id, name, path } = btn.dataset;
+
+  if (!confirm(`Delete "${name}"? This will permanently remove the video and cannot be undone.`)) return;
+
+  btn.disabled    = true;
+  btn.textContent = 'Deleting…';
+  movementErrorMsg.classList.add('hidden');
+
+  const { error: dbError } = await client
+    .from('movements')
+    .delete()
+    .eq('id', id);
+
+  if (dbError) {
+    btn.disabled    = false;
+    btn.textContent = 'Delete';
+    movementErrorMsg.textContent = 'Failed to delete. Please try again.';
+    movementErrorMsg.classList.remove('hidden');
+    return;
+  }
+
+  await client.storage.from('videos').remove([path]);
+
+  loadMovements();
+});
+
+function formatDate(iso) {
+  return new Date(iso).toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// ── Muscle Groups ─────────────────────────────────────────────
 const groupList = document.getElementById('group-list');
 const addForm   = document.getElementById('add-form');
 const newInput  = document.getElementById('new-group');
@@ -91,4 +159,5 @@ function escape(str) {
 }
 
 // ── Init ─────────────────────────────────────────────────────
+loadMovements();
 loadGroups();

@@ -16,6 +16,7 @@
       <a href="catalog.html">Catalog</a>
       <a href="upload.html" class="active">Upload</a>
       <a href="admin.html" id="admin-link" class="hidden">Admin</a>
+      <a href="account.html">Account</a>
       <button class="nav-signout" onclick="signOut()">Sign Out</button>
     </div>
   </header>
@@ -31,6 +32,7 @@
       <div class="field">
         <label for="name">Movement Name <span class="required">*</span></label>
         <input type="text" id="name" placeholder="e.g. Barbell Back Squat" required>
+        <div id="name-warning" class="warning hidden"></div>
       </div>
 
       <div class="field">

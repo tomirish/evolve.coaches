@@ -1,7 +1,7 @@
 requireAuth();
 
 let allMovements = [];
-let sortAsc      = true;
+let sortMode     = 'az'; // 'az', 'za', 'recent'
 let activeGroup  = 'All';
 
 const listEl    = document.getElementById('catalog-list');
@@ -14,7 +14,7 @@ async function load() {
   listEl.innerHTML = '<p class="status-msg">Loading…</p>';
 
   const [movementsResult, groupsResult] = await Promise.all([
-    client.from('movements').select('id, name, muscle_groups, alt_names').order('name'),
+    client.from('movements').select('id, name, muscle_groups, alt_names, created_at').order('name'),
     client.from('muscle_groups').select('name').order('name')
   ]);
 
@@ -26,9 +26,9 @@ async function load() {
   // Expand each movement into one entry per name (primary + each alt)
   allMovements = [];
   movementsResult.data.forEach(m => {
-    allMovements.push({ id: m.id, name: m.name, muscle_groups: m.muscle_groups, alias: null });
+    allMovements.push({ id: m.id, name: m.name, muscle_groups: m.muscle_groups, alias: null, created_at: m.created_at });
     (m.alt_names || []).forEach(alt => {
-      allMovements.push({ id: m.id, name: alt, muscle_groups: m.muscle_groups, alias: m.name });
+      allMovements.push({ id: m.id, name: alt, muscle_groups: m.muscle_groups, alias: m.name, created_at: m.created_at });
     });
   });
   renderFilterPills(groupsResult.data || []);
@@ -55,8 +55,9 @@ function render() {
   });
 
   filtered.sort((a, b) => {
+    if (sortMode === 'recent') return new Date(b.created_at) - new Date(a.created_at);
     const cmp = a.name.localeCompare(b.name);
-    return sortAsc ? cmp : -cmp;
+    return sortMode === 'az' ? cmp : -cmp;
   });
 
   if (filtered.length === 0) {
@@ -98,8 +99,10 @@ function escape(str) {
 searchEl.addEventListener('input', render);
 
 sortBtn.addEventListener('click', () => {
-  sortAsc = !sortAsc;
-  sortBtn.textContent = sortAsc ? 'A–Z' : 'Z–A';
+  if (sortMode === 'az')     sortMode = 'za';
+  else if (sortMode === 'za') sortMode = 'recent';
+  else                        sortMode = 'az';
+  sortBtn.textContent = sortMode === 'az' ? 'A–Z' : sortMode === 'za' ? 'Z–A' : 'Recent';
   render();
 });
 

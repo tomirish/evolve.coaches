@@ -9,6 +9,26 @@ const progressWrap = document.getElementById('progress-wrap');
 const progressFill = document.getElementById('progress-fill');
 const progressText = document.getElementById('progress-text');
 const pillGroup    = document.getElementById('pill-group');
+const nameInput    = document.getElementById('name');
+const nameWarning  = document.getElementById('name-warning');
+
+// ── Duplicate name check ──────────────────────────────────────
+nameInput.addEventListener('blur', async () => {
+  const name = nameInput.value.trim();
+  nameWarning.classList.add('hidden');
+  if (!name) return;
+
+  const { data } = await client
+    .from('movements')
+    .select('name')
+    .ilike('name', name)
+    .limit(1);
+
+  if (data && data.length > 0) {
+    nameWarning.textContent = `A movement named "${data[0].name}" already exists — check the catalog before uploading.`;
+    nameWarning.classList.remove('hidden');
+  }
+});
 
 // ── Load muscle groups ────────────────────────────────────────
 async function loadMuscleGroups() {

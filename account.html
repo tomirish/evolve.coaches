@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evolve Coaches — Account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+  <header class="nav">
+    <a href="catalog.html" class="brand">Evolve Coaches Video Library</a>
+    <div class="nav-links">
+      <a href="catalog.html">Catalog</a>
+      <a href="upload.html">Upload</a>
+      <a href="admin.html" id="admin-link" class="hidden">Admin</a>
+      <a href="account.html" class="active">Account</a>
+      <button class="nav-signout" onclick="signOut()">Sign Out</button>
+    </div>
+  </header>
+
+  <main class="page">
+    <h1 class="page-title">Account</h1>
+
+    <section class="admin-section">
+      <h2 class="admin-section-title">Change Password</h2>
+
+      <form id="password-form" novalidate>
+        <div id="error-msg" class="error hidden"></div>
+        <div id="success-msg" class="success hidden"></div>
+
+        <div class="field">
+          <label for="new-password">New Password</label>
+          <input type="password" id="new-password" placeholder="••••••••" autocomplete="new-password" required>
+        </div>
+
+        <div class="field">
+          <label for="confirm-password">Confirm New Password</label>
+          <input type="password" id="confirm-password" placeholder="••••••••" autocomplete="new-password" required>
+        </div>
+
+        <button type="submit" id="save-btn" class="btn btn-primary">Update Password</button>
+      </form>
+    </section>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  <script src="js/config.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/account.js"></script>
+</body>
+</html>

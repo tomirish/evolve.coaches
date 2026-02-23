@@ -68,6 +68,22 @@ body {
   margin-bottom: 2rem;
 }
 
+.auth-back {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.875rem;
+}
+
+.auth-back a {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.auth-back a:hover {
+  color: var(--accent);
+}
+
 /* ============================================================
    FORMS
    ============================================================ */

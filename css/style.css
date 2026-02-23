@@ -625,21 +625,27 @@ body {
    ============================================================ */
 .admin-tabs {
   display: flex;
-  border-bottom: 2px solid var(--border);
+  gap: 0.25rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.25rem;
+  margin-top: 1.25rem;
   margin-bottom: 1.75rem;
 }
 
 .admin-tab {
-  padding: 0.625rem 1.25rem;
+  flex: 1;
+  padding: 0.5rem 1rem;
   font-size: 0.9375rem;
   font-weight: 600;
   color: var(--text-muted);
   background: none;
   border: none;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
+  border-radius: calc(var(--radius) - 2px);
   cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  text-align: center;
 }
 
 .admin-tab:hover {
@@ -647,12 +653,17 @@ body {
 }
 
 .admin-tab.active {
-  color: var(--accent);
-  border-bottom-color: var(--accent);
+  background: var(--white);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .admin-search {
   margin-bottom: 1rem;
+}
+
+.admin-search .search-input {
+  width: 100%;
 }
 
 

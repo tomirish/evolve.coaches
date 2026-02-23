@@ -42,15 +42,30 @@ async function initNav() {
     if (adminLink) adminLink.classList.remove('hidden');
   }
 
-  if (profile.full_name) {
-    const firstName   = profile.full_name.split(' ')[0];
-    const signOutBtn  = document.querySelector('.nav-signout');
-    if (signOutBtn) {
-      const greeting = document.createElement('span');
-      greeting.className   = 'nav-greeting';
-      greeting.textContent = `Hi, ${firstName}`;
-      signOutBtn.parentNode.insertBefore(greeting, signOutBtn);
-    }
+  const firstName  = profile.full_name ? profile.full_name.split(' ')[0] : 'Me';
+  const signOutBtn = document.querySelector('.nav-signout');
+  if (signOutBtn) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'nav-user';
+    wrapper.innerHTML = `
+      <button class="nav-user-btn">Hi, ${firstName} <span class="nav-caret">▾</span></button>
+      <div class="nav-user-menu hidden">
+        <a href="account.html">Account</a>
+        <button class="nav-user-signout">Sign Out</button>
+      </div>
+    `;
+    signOutBtn.parentNode.replaceChild(wrapper, signOutBtn);
+
+    const userBtn     = wrapper.querySelector('.nav-user-btn');
+    const menu        = wrapper.querySelector('.nav-user-menu');
+    const menuSignOut = wrapper.querySelector('.nav-user-signout');
+
+    userBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      menu.classList.toggle('hidden');
+    });
+    menuSignOut.addEventListener('click', signOut);
+    document.addEventListener('click', () => menu.classList.add('hidden'));
   }
 }
 

@@ -233,10 +233,73 @@ body {
   border-color: rgba(255,255,255,0.6);
 }
 
-.nav-greeting {
+.nav-user {
+  position: relative;
+}
+
+.nav-user-btn {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.75);
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.nav-user-btn:hover {
+  color: var(--white);
+}
+
+.nav-caret {
+  font-size: 0.7rem;
+  opacity: 0.8;
+  margin-top: 1px;
+}
+
+.nav-user-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.75rem);
+  background: var(--white);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  border: 1px solid var(--border);
+  min-width: 150px;
+  overflow: hidden;
+  z-index: 20;
+}
+
+.nav-user-menu a,
+.nav-user-menu button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  color: var(--text);
+  text-decoration: none;
   font-size: 0.875rem;
-  color: rgba(255,255,255,0.55);
-  font-weight: 400;
+  font-weight: 500;
+  font-family: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.nav-user-menu a:hover,
+.nav-user-menu button:hover {
+  background: var(--bg);
+}
+
+.nav-user-signout {
+  color: #dc2626 !important;
+  border-top: 1px solid var(--border) !important;
 }
 
 /* ============================================================
@@ -792,12 +855,9 @@ body {
   }
 
   .nav-links a,
-  .nav-signout {
+  .nav-signout,
+  .nav-user-btn {
     font-size: 0.8125rem;
-  }
-
-  .nav-greeting {
-    display: none;
   }
 
   /* Reduce page padding */

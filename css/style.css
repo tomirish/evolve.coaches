@@ -593,6 +593,29 @@ body {
   color: var(--accent);
 }
 
+.btn-danger {
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.65rem 1.25rem;
+  border: 1px solid #dc2626;
+  border-radius: var(--radius);
+  background: none;
+  color: #dc2626;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-danger:hover {
+  background: #fef2f2;
+}
+
+.btn-danger:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .btn-primary {
   flex: 2;
 }

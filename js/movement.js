@@ -79,7 +79,10 @@ function renderView() {
 }
 
 // ── Edit mode ────────────────────────────────────────────────
-function renderEdit() {
+async function renderEdit() {
+  const profile  = await getProfile();
+  const isAdmin  = profile && profile.role === 'admin';
+
   const pillsHtml = muscleGroups.map(g => {
     const checked = (movement.muscle_groups || []).includes(g) ? 'checked' : '';
     return `<label class="pill"><input type="checkbox" value="${escape(g)}" ${checked}> ${escape(g)}</label>`;
@@ -119,11 +122,43 @@ function renderEdit() {
         <button type="submit" class="btn btn-primary" id="save-btn">Save Changes</button>
         <button type="button" class="btn btn-cancel" id="cancel-btn">Cancel</button>
       </div>
+
+      ${isAdmin ? `<button type="button" class="btn btn-danger" id="delete-btn">Delete Movement</button>` : ''}
     </form>
   `;
 
   document.getElementById('cancel-btn').addEventListener('click', renderView);
   document.getElementById('edit-form').addEventListener('submit', saveChanges);
+  if (isAdmin) {
+    document.getElementById('delete-btn').addEventListener('click', deleteMovement);
+  }
+}
+
+// ── Delete ────────────────────────────────────────────────────
+async function deleteMovement() {
+  if (!confirm(`Delete "${movement.name}"? This will permanently remove the video and cannot be undone.`)) return;
+
+  const deleteBtn = document.getElementById('delete-btn');
+  deleteBtn.disabled    = true;
+  deleteBtn.textContent = 'Deleting…';
+
+  const { error: dbError } = await client
+    .from('movements')
+    .delete()
+    .eq('id', id);
+
+  if (dbError) {
+    deleteBtn.disabled    = false;
+    deleteBtn.textContent = 'Delete Movement';
+    const err = document.getElementById('error-msg');
+    err.textContent = 'Failed to delete. Please try again.';
+    err.classList.remove('hidden');
+    return;
+  }
+
+  await client.storage.from('videos').remove([movement.video_path]);
+
+  window.location.href = 'catalog.html';
 }
 
 // ── Save ─────────────────────────────────────────────────────

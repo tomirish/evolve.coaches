@@ -181,8 +181,11 @@ const userErrorMsg   = document.getElementById('user-error-msg');
 const inviteForm     = document.getElementById('invite-form');
 
 async function callFunction(name, body = null) {
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) return { error: 'Not authenticated' };
   const { data, error } = await client.functions.invoke(name, {
     body: body || undefined,
+    headers: { Authorization: `Bearer ${session.access_token}` },
   });
   if (error) return { error: error.message };
   return data;

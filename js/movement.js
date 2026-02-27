@@ -26,7 +26,7 @@ async function load() {
 
   const { data: signed, error: signedError } = await client.storage
     .from('videos')
-    .createSignedUrl(movement.video_path, 3600);
+    .createSignedUrl(movement.video_path, 86400);
 
   if (signedError || !signed) {
     contentEl.innerHTML = '<p class="status-msg error">Could not load video. Please try again.</p>';
@@ -296,7 +296,7 @@ async function replaceVideo() {
 
   const { data: signed } = await client.storage
     .from('videos')
-    .createSignedUrl(movement.video_path, 3600);
+    .createSignedUrl(movement.video_path, 86400);
 
   if (signed) {
     movement.signedUrl = signed.signedUrl;

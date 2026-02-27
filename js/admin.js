@@ -189,7 +189,6 @@ async function callFunction(name, body = null) {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
   if (error) {
-    console.error('callFunction error:', name, error);
     const ctx = error.context;
     if (ctx && typeof ctx === 'object' && ctx.error) return { error: ctx.error };
     return { error: error.message };

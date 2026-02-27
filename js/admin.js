@@ -186,6 +186,7 @@ async function callFunction(name, body = null) {
     method: body ? 'POST' : 'GET',
     headers: {
       Authorization: `Bearer ${session.access_token}`,
+      apikey: SUPABASE_ANON_KEY,
       'Content-Type': 'application/json',
     },
     body: body ? JSON.stringify(body) : undefined,

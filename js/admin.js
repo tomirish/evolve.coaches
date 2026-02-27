@@ -188,11 +188,9 @@ async function callFunction(name, body = null) {
     headers: { Authorization: `Bearer ${session.access_token}` },
   });
   if (error) {
-    // Try to extract the real error message from the function response body
-    try {
-      const ctx = await error.context?.json?.();
-      if (ctx?.error) return { error: ctx.error };
-    } catch { /* fall through */ }
+    console.error('callFunction error:', name, error);
+    const ctx = error.context;
+    if (ctx && typeof ctx === 'object' && ctx.error) return { error: ctx.error };
     return { error: error.message };
   }
   return data;

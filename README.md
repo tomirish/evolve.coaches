@@ -15,7 +15,7 @@ A private video library for coaches at [Evolve Strong Fitness](https://evolvestr
 
 ## Features
 - Secure login (coaches only)
-- Upload videos with movement name, muscle groups, and comments
-- Browse movements alphabetically with search, filter by muscle group, and A–Z / Z–A sort
+- Upload videos with movement name, tags, and comments
+- Browse movements alphabetically with search, filter by tag, and A–Z / Z–A / Recent sort
 - Watch videos and edit metadata inline
-- Admin page to manage muscle groups
+- Admin page to manage tags and users

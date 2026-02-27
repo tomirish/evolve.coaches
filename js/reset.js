@@ -1,28 +1,25 @@
 const contentEl = document.getElementById('content');
 
-// Detect invite flow via query param (?mode=invite) — set by admin.js
-// when building the redirectTo URL. Supabase preserves query params when
-// it clears the hash, so this is reliable even after token processing.
-const isInvite = new URLSearchParams(window.location.search).get('mode') === 'invite';
-
 // ── Auth state listener ───────────────────────────────────────
-// PASSWORD_RECOVERY fires for forgot-password links (replayed to late listeners).
-// SIGNED_IN fires for invite links but may arrive before this listener is
-// registered. INITIAL_SESSION is what late listeners receive instead — we
-// handle that case when we know the user arrived via an invite link.
+// PASSWORD_RECOVERY  — password reset link (replayed to late listeners ✓)
+// SIGNED_IN          — invite link fires this, but may arrive before this
+//                      listener is registered; handled via INITIAL_SESSION
+// INITIAL_SESSION    — fired immediately to any new listener with current
+//                      state. If there's already a session on this page the
+//                      user arrived via an email link, so show password form.
 client.auth.onAuthStateChange((event, session) => {
   if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
     showNewPasswordForm();
-  } else if (event === 'INITIAL_SESSION' && session && isInvite) {
+  } else if (event === 'INITIAL_SESSION' && session) {
     showNewPasswordForm();
   }
 });
 
 // ── Init ─────────────────────────────────────────────────────
-// If there's a hash or this is an invite, Supabase is processing the token —
-// show a loading state and wait for the auth event above.
-// If neither, the coach clicked "Forgot password?" — show the email form.
-if (window.location.hash || isInvite) {
+// If there's a hash, Supabase is processing a token — show loading and
+// wait for the auth event above.
+// If no hash, the coach clicked "Forgot password?" — show the email form.
+if (window.location.hash) {
   contentEl.innerHTML = '<p class="status-msg">Loading…</p>';
 } else {
   showEmailForm();

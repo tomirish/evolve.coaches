@@ -181,17 +181,11 @@ const userErrorMsg   = document.getElementById('user-error-msg');
 const inviteForm     = document.getElementById('invite-form');
 
 async function callFunction(name, body = null) {
-  const { data: { session } } = await client.auth.getSession();
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
-    method: body ? 'POST' : 'GET',
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-      apikey: SUPABASE_ANON_KEY,
-      'Content-Type': 'application/json',
-    },
-    body: body ? JSON.stringify(body) : undefined,
+  const { data, error } = await client.functions.invoke(name, {
+    body: body || undefined,
   });
-  return res.json();
+  if (error) return { error: error.message };
+  return data;
 }
 
 async function loadUsers() {

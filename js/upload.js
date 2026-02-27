@@ -33,7 +33,7 @@ nameInput.addEventListener('blur', async () => {
 // ── Load muscle groups ────────────────────────────────────────
 async function loadMuscleGroups() {
   const { data, error } = await client
-    .from('muscle_groups')
+    .from('tags')
     .select('name')
     .order('name');
 
@@ -75,7 +75,7 @@ form.addEventListener('submit', async (e) => {
   const altNamesRaw = document.getElementById('alt-names').value.trim();
   const alt_names   = altNamesRaw ? altNamesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
   const file        = fileInput.files[0];
-  const muscle_groups = Array.from(
+  const tags = Array.from(
     document.querySelectorAll('.pill-group input[type="checkbox"]:checked')
   ).map(cb => cb.value);
 
@@ -122,7 +122,7 @@ form.addEventListener('submit', async (e) => {
     .insert({
       name,
       alt_names,
-      muscle_groups,
+      tags,
       comments: comments || null,
       video_path: storageData.path,
       uploaded_by: session.user.id

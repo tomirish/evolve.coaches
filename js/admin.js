@@ -105,7 +105,7 @@ async function loadGroups() {
   groupList.innerHTML = '<li class="status-msg">Loading…</li>';
 
   const { data, error } = await client
-    .from('muscle_groups')
+    .from('tags')
     .select('id, name')
     .order('name');
 
@@ -136,7 +136,7 @@ addForm.addEventListener('submit', async (e) => {
   errorMsg.classList.add('hidden');
 
   const { error } = await client
-    .from('muscle_groups')
+    .from('tags')
     .insert({ name });
 
   if (error) {
@@ -160,7 +160,7 @@ groupList.addEventListener('click', async (e) => {
   if (!confirm(`Delete "${name}"? This won't affect movements already tagged with it.`)) return;
 
   const { error } = await client
-    .from('muscle_groups')
+    .from('tags')
     .delete()
     .eq('id', id);
 

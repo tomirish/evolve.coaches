@@ -13,7 +13,7 @@ let muscleGroups = [];
 async function load() {
   const [movementResult, groupsResult] = await Promise.all([
     client.from('movements').select('*').eq('id', id).single(),
-    client.from('muscle_groups').select('name').order('name')
+    client.from('tags').select('name').order('name')
   ]);
 
   if (movementResult.error || !movementResult.data) {
@@ -40,8 +40,8 @@ async function load() {
 
 // ── View mode ────────────────────────────────────────────────
 function renderView() {
-  const groups = (movement.muscle_groups || []).length > 0
-    ? movement.muscle_groups.map(g => `<span class="meta-tag">${escape(g)}</span>`).join('')
+  const groups = (movement.tags || []).length > 0
+    ? movement.tags.map(g => `<span class="meta-tag">${escape(g)}</span>`).join('')
     : '<span class="meta-none">None listed</span>';
 
   const altNames = (movement.alt_names || []).length > 0
@@ -84,7 +84,7 @@ async function renderEdit() {
   const isAdmin  = profile && profile.role === 'admin';
 
   const pillsHtml = muscleGroups.map(g => {
-    const checked = (movement.muscle_groups || []).includes(g) ? 'checked' : '';
+    const checked = (movement.tags || []).includes(g) ? 'checked' : '';
     return `<label class="pill"><input type="checkbox" value="${escape(g)}" ${checked}> ${escape(g)}</label>`;
   }).join('');
 
@@ -192,7 +192,7 @@ async function saveChanges(e) {
   const comments    = document.getElementById('comments').value.trim();
   const altNamesRaw = document.getElementById('alt-names').value.trim();
   const alt_names   = altNamesRaw ? altNamesRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-  const muscle_groups = Array.from(
+  const tags = Array.from(
     document.querySelectorAll('.pill-group input[type="checkbox"]:checked')
   ).map(cb => cb.value);
 
@@ -209,7 +209,7 @@ async function saveChanges(e) {
 
   const { error } = await client
     .from('movements')
-    .update({ name, alt_names, muscle_groups, comments: comments || null })
+    .update({ name, alt_names, tags, comments: comments || null })
     .eq('id', id);
 
   if (error) {
@@ -223,7 +223,7 @@ async function saveChanges(e) {
 
   movement.name          = name;
   movement.alt_names     = alt_names;
-  movement.muscle_groups = muscle_groups;
+  movement.tags = tags;
   movement.comments      = comments || null;
   renderView();
 }

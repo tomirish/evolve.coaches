@@ -14,8 +14,8 @@ async function load() {
   listEl.innerHTML = '<p class="status-msg">Loading…</p>';
 
   const [movementsResult, groupsResult] = await Promise.all([
-    client.from('movements').select('id, name, muscle_groups, alt_names, created_at').order('name'),
-    client.from('muscle_groups').select('name').order('name')
+    client.from('movements').select('id, name, tags, alt_names, created_at').order('name'),
+    client.from('tags').select('name').order('name')
   ]);
 
   if (movementsResult.error) {
@@ -26,9 +26,9 @@ async function load() {
   // Expand each movement into one entry per name (primary + each alt)
   allMovements = [];
   movementsResult.data.forEach(m => {
-    allMovements.push({ id: m.id, name: m.name, muscle_groups: m.muscle_groups, alias: null, created_at: m.created_at });
+    allMovements.push({ id: m.id, name: m.name, tags: m.tags, alias: null, created_at: m.created_at });
     (m.alt_names || []).forEach(alt => {
-      allMovements.push({ id: m.id, name: alt, muscle_groups: m.muscle_groups, alias: m.name, created_at: m.created_at });
+      allMovements.push({ id: m.id, name: alt, tags: m.tags, alias: m.name, created_at: m.created_at });
     });
   });
   renderFilterPills(groupsResult.data || []);
@@ -50,7 +50,7 @@ function render() {
 
   let filtered = allMovements.filter(m => {
     const matchesSearch = m.name.toLowerCase().includes(query);
-    const matchesGroup  = activeGroup === 'All' || (m.muscle_groups || []).includes(activeGroup);
+    const matchesGroup  = activeGroup === 'All' || (m.tags || []).includes(activeGroup);
     return matchesSearch && matchesGroup;
   });
 
@@ -73,7 +73,7 @@ function render() {
       <div class="movement-card-body">
         <span class="movement-name">${escape(m.name)}</span>
         ${m.alias ? `<span class="movement-alias">→ ${escape(m.alias)}</span>` : ''}
-        <span class="movement-groups">${formatGroups(m.muscle_groups)}</span>
+        <span class="movement-groups">${formatGroups(m.tags)}</span>
       </div>
       <span class="movement-arrow">›</span>
     </a>

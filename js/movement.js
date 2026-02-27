@@ -178,7 +178,8 @@ async function deleteMovement() {
     return;
   }
 
-  await client.storage.from('videos').remove([movement.video_path]);
+  const { error: storageError } = await client.storage.from('videos').remove([movement.video_path]);
+  if (storageError) console.error('Storage delete failed:', movement.video_path, storageError);
 
   window.location.href = 'catalog.html';
 }
@@ -291,7 +292,8 @@ async function replaceVideo() {
     return;
   }
 
-  await client.storage.from('videos').remove([oldPath]);
+  const { error: oldFileError } = await client.storage.from('videos').remove([oldPath]);
+  if (oldFileError) console.error('Storage delete failed for old video:', oldPath, oldFileError);
   movement.video_path = storageData.path;
 
   const { data: signed } = await client.storage

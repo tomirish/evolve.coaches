@@ -86,7 +86,8 @@ movementList.addEventListener('click', async (e) => {
     return;
   }
 
-  await client.storage.from('videos').remove([path]);
+  const { error: storageError } = await client.storage.from('videos').remove([path]);
+  if (storageError) console.error('Storage delete failed:', path, storageError);
   loadMovements();
 });
 

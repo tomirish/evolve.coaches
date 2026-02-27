@@ -129,7 +129,8 @@ form.addEventListener('submit', async (e) => {
     });
 
   if (dbError) {
-    await client.storage.from('videos').remove([filename]);
+    const { error: storageError } = await client.storage.from('videos').remove([filename]);
+    if (storageError) console.error('Storage cleanup failed:', filename, storageError);
     showError('Failed to save movement. Please try again.');
     resetUI();
     return;

@@ -48,8 +48,15 @@ profileForm.addEventListener('submit', async (e) => {
     return;
   }
 
-  // Bust the profile cache so initNav re-fetches the updated name
+  // Bust the profile cache and update the nav greeting immediately
   _profile = null;
+  const navBtn = document.querySelector('.nav-user-btn');
+  if (navBtn) {
+    const firstName = newName.split(' ')[0].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const caret = navBtn.querySelector('.nav-caret');
+    navBtn.textContent = `Hi, ${firstName} `;
+    if (caret) navBtn.appendChild(caret);
+  }
 
   if (newEmail && newEmail !== originalEmail) {
     const { error: emailError } = await client.auth.updateUser({ email: newEmail });

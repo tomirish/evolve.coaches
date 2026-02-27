@@ -24,16 +24,18 @@ async function load() {
   movement     = movementResult.data;
   muscleGroups = (groupsResult.data || []).map(g => g.name);
 
-  const { data: signed, error: signedError } = await client.storage
-    .from('videos')
-    .createSignedUrl(movement.video_path, 86400);
+  const [signedResult, uploaderResult] = await Promise.all([
+    client.storage.from('videos').createSignedUrl(movement.video_path, 86400),
+    client.from('profiles').select('full_name').eq('id', movement.uploaded_by).single()
+  ]);
 
-  if (signedError || !signed) {
+  if (signedResult.error || !signedResult.data) {
     contentEl.innerHTML = '<p class="status-msg error">Could not load video. Please try again.</p>';
     return;
   }
 
-  movement.signedUrl = signed.signedUrl;
+  movement.signedUrl    = signedResult.data.signedUrl;
+  movement.uploaderName = uploaderResult.data?.full_name || null;
   renderView();
   initNav();
 }
@@ -72,6 +74,11 @@ function renderView() {
     <div class="detail-section">
       <p class="detail-label">Comments</p>
       <p class="detail-comments">${movement.comments ? escape(movement.comments) : '<span class="meta-none">None</span>'}</p>
+    </div>
+
+    <div class="detail-section">
+      <p class="detail-label">Uploaded by</p>
+      <p class="detail-comments">${movement.uploaderName ? escape(movement.uploaderName) : '<span class="meta-none">Unknown</span>'}</p>
     </div>
   `;
 
@@ -148,7 +155,19 @@ async function renderEdit() {
   document.getElementById('edit-form').addEventListener('submit', saveChanges);
   document.getElementById('replace-file').addEventListener('change', () => {
     const file = document.getElementById('replace-file').files[0];
-    document.getElementById('replace-label').textContent = file ? file.name : 'Tap to select a replacement video';
+    if (!file) {
+      document.getElementById('replace-label').textContent = 'Tap to select a replacement video';
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE) {
+      document.getElementById('replace-file').value = '';
+      document.getElementById('replace-label').textContent = 'Tap to select a replacement video';
+      document.getElementById('replace-error').textContent = 'File is too large. Maximum size is 500 MB.';
+      document.getElementById('replace-error').classList.remove('hidden');
+      return;
+    }
+    document.getElementById('replace-error').classList.add('hidden');
+    document.getElementById('replace-label').textContent = file.name;
   });
   document.getElementById('replace-btn').addEventListener('click', replaceVideo);
   if (isAdmin) {
@@ -246,6 +265,11 @@ async function replaceVideo() {
     replaceError.classList.remove('hidden');
     return;
   }
+  if (file.size > MAX_FILE_SIZE) {
+    replaceError.textContent = 'File is too large. Maximum size is 500 MB.';
+    replaceError.classList.remove('hidden');
+    return;
+  }
 
   replaceBtn.disabled    = true;
   replaceBtn.textContent = 'Uploading…';
@@ -318,6 +342,8 @@ async function replaceVideo() {
   replaceSuccess.textContent = 'Video replaced successfully.';
   replaceSuccess.classList.remove('hidden');
 }
+
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
 
 // ── Helper ───────────────────────────────────────────────────
 function escape(str) {

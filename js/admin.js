@@ -328,7 +328,8 @@ userList.addEventListener('click', async (e) => {
     userSuccessMsg.classList.add('hidden');
     userErrorMsg.classList.add('hidden');
 
-    const { error } = await client.auth.resetPasswordForEmail(email);
+    const redirectTo = new URL('reset.html', window.location.href).href;
+    const { error } = await client.auth.resetPasswordForEmail(email, { redirectTo });
 
     resetBtn.disabled    = false;
     resetBtn.textContent = 'Reset Password';

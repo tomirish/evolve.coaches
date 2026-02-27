@@ -47,10 +47,23 @@ async function loadMuscleGroups() {
   ).join('');
 }
 
+const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
+
 // ── File selection ────────────────────────────────────────────
 fileInput.addEventListener('change', () => {
   const file = fileInput.files[0];
-  fileLabel.textContent = file ? file.name : 'Tap to select a video';
+  if (!file) {
+    fileLabel.textContent = 'Tap to select a video';
+    return;
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    fileInput.value = '';
+    fileLabel.textContent = 'Tap to select a video';
+    showError('File is too large. Maximum size is 500 MB.');
+    return;
+  }
+  errorMsg.classList.add('hidden');
+  fileLabel.textContent = file.name;
 });
 
 // ── Submit ────────────────────────────────────────────────────
@@ -72,6 +85,10 @@ form.addEventListener('submit', async (e) => {
   }
   if (!file) {
     showError('Please select a video file.');
+    return;
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    showError('File is too large. Maximum size is 500 MB.');
     return;
   }
 

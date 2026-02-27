@@ -4,7 +4,7 @@ const contentEl = document.getElementById('content');
 // When a coach arrives via the email reset link, Supabase fires
 // PASSWORD_RECOVERY. We switch to the new-password form at that point.
 client.auth.onAuthStateChange((event) => {
-  if (event === 'PASSWORD_RECOVERY') {
+  if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
     showNewPasswordForm();
   }
 });

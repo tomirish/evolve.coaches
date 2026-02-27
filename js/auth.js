@@ -42,7 +42,8 @@ async function initNav() {
     if (adminLink) adminLink.classList.remove('hidden');
   }
 
-  const firstName  = profile.full_name ? profile.full_name.split(' ')[0] : 'Me';
+  const rawFirstName = profile.full_name ? profile.full_name.split(' ')[0] : 'Me';
+  const firstName    = rawFirstName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const signOutBtn = document.querySelector('.nav-signout');
   if (signOutBtn) {
     const wrapper = document.createElement('div');

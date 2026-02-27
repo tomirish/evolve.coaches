@@ -172,6 +172,205 @@ groupList.addEventListener('click', async (e) => {
   loadGroups();
 });
 
+// ── Users ─────────────────────────────────────────────────────
+let allUsers = [];
+
+const userList       = document.getElementById('user-list');
+const userSuccessMsg = document.getElementById('user-success-msg');
+const userErrorMsg   = document.getElementById('user-error-msg');
+const inviteForm     = document.getElementById('invite-form');
+
+async function callFunction(name, body = null) {
+  const { data: { session } } = await client.auth.getSession();
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+    method: body ? 'POST' : 'GET',
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      'Content-Type': 'application/json',
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+  return res.json();
+}
+
+async function loadUsers() {
+  userList.innerHTML = '<li class="status-msg">Loading…</li>';
+
+  const result = await callFunction('list-users');
+  if (result.error) {
+    userList.innerHTML = '<li class="status-msg error">Failed to load users. Please refresh.</li>';
+    return;
+  }
+
+  allUsers = result.users;
+  renderUsers(allUsers);
+}
+
+function renderUsers(data) {
+  if (data.length === 0) {
+    userList.innerHTML = '<li class="status-msg">No users yet.</li>';
+    return;
+  }
+
+  userList.innerHTML = data.map(u => `
+    <li class="admin-list-item" data-id="${u.id}" data-email="${escape(u.email)}">
+      <div class="admin-user-info">
+        <div class="admin-user-name">${escape(u.full_name || '(No name)')}</div>
+        <div class="admin-item-date">${escape(u.email)}</div>
+        <span class="role-badge${u.role === 'admin' ? ' admin' : ''}">${u.role === 'admin' ? 'Admin' : 'Coach'}</span>
+      </div>
+      <div class="admin-user-actions">
+        <button class="btn-sm btn-reset-pw" data-email="${escape(u.email)}" data-name="${escape(u.full_name || u.email)}">Reset Password</button>
+        <button class="btn-sm btn-edit-user" data-id="${u.id}" data-name="${escape(u.full_name || '')}" data-role="${escape(u.role)}">Edit</button>
+        <button class="btn-delete btn-delete-user" data-id="${u.id}" data-name="${escape(u.full_name || u.email)}">Delete</button>
+      </div>
+    </li>
+  `).join('');
+}
+
+function enterEditMode(li, { id, name, role }) {
+  const infoDiv    = li.querySelector('.admin-user-info');
+  const actionsDiv = li.querySelector('.admin-user-actions');
+
+  infoDiv.innerHTML = `
+    <input class="edit-inline" type="text" value="${escape(name)}" placeholder="Full name">
+    <select class="edit-inline">
+      <option value="coach"${role === 'coach' ? ' selected' : ''}>Coach</option>
+      <option value="admin"${role === 'admin' ? ' selected' : ''}>Admin</option>
+    </select>
+  `;
+  actionsDiv.innerHTML = `
+    <button class="btn-sm btn-save-user">Save</button>
+    <button class="btn-sm btn-cancel-edit">Cancel</button>
+  `;
+}
+
+inviteForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const email     = document.getElementById('invite-email').value.trim();
+  const full_name = document.getElementById('invite-name').value.trim();
+  const role      = document.getElementById('invite-role').value;
+
+  userSuccessMsg.classList.add('hidden');
+  userErrorMsg.classList.add('hidden');
+
+  const submitBtn = inviteForm.querySelector('button[type="submit"]');
+  submitBtn.disabled    = true;
+  submitBtn.textContent = 'Inviting…';
+
+  const result = await callFunction('invite-user', { email, full_name, role });
+
+  submitBtn.disabled    = false;
+  submitBtn.textContent = 'Invite';
+
+  if (result.error) {
+    userErrorMsg.textContent = result.error;
+    userErrorMsg.classList.remove('hidden');
+    return;
+  }
+
+  inviteForm.reset();
+  userSuccessMsg.textContent = `Invite sent to ${email}.`;
+  userSuccessMsg.classList.remove('hidden');
+  loadUsers();
+});
+
+userList.addEventListener('click', async (e) => {
+  // Edit button
+  const editBtn = e.target.closest('.btn-edit-user');
+  if (editBtn) {
+    enterEditMode(editBtn.closest('li'), editBtn.dataset);
+    return;
+  }
+
+  // Save edit
+  const saveBtn = e.target.closest('.btn-save-user');
+  if (saveBtn) {
+    const li        = saveBtn.closest('li');
+    const id        = li.dataset.id;
+    const full_name = li.querySelector('input.edit-inline').value.trim();
+    const role      = li.querySelector('select.edit-inline').value;
+
+    if (!full_name) return;
+
+    saveBtn.disabled    = true;
+    saveBtn.textContent = 'Saving…';
+    userErrorMsg.classList.add('hidden');
+
+    const { error } = await client.from('profiles').update({ full_name, role }).eq('id', id);
+
+    if (error) {
+      userErrorMsg.textContent = 'Failed to save. Please try again.';
+      userErrorMsg.classList.remove('hidden');
+      saveBtn.disabled    = false;
+      saveBtn.textContent = 'Save';
+      return;
+    }
+
+    loadUsers();
+    return;
+  }
+
+  // Cancel edit
+  const cancelBtn = e.target.closest('.btn-cancel-edit');
+  if (cancelBtn) {
+    renderUsers(allUsers);
+    return;
+  }
+
+  // Reset password button
+  const resetBtn = e.target.closest('.btn-reset-pw');
+  if (resetBtn) {
+    const { email, name } = resetBtn.dataset;
+    if (!confirm(`Send a password reset email to ${email}?`)) return;
+
+    resetBtn.disabled    = true;
+    resetBtn.textContent = 'Sending…';
+    userSuccessMsg.classList.add('hidden');
+    userErrorMsg.classList.add('hidden');
+
+    const { error } = await client.auth.resetPasswordForEmail(email);
+
+    resetBtn.disabled    = false;
+    resetBtn.textContent = 'Reset Password';
+
+    if (error) {
+      userErrorMsg.textContent = 'Failed to send reset email. Please try again.';
+      userErrorMsg.classList.remove('hidden');
+      return;
+    }
+
+    userSuccessMsg.textContent = `Password reset email sent to ${email}.`;
+    userSuccessMsg.classList.remove('hidden');
+    return;
+  }
+
+  // Delete button
+  const deleteBtn = e.target.closest('.btn-delete-user');
+  if (deleteBtn) {
+    const { id, name } = deleteBtn.dataset;
+    if (!confirm(`Remove ${name} from the app? This cannot be undone.`)) return;
+
+    deleteBtn.disabled    = true;
+    deleteBtn.textContent = 'Deleting…';
+    userSuccessMsg.classList.add('hidden');
+    userErrorMsg.classList.add('hidden');
+
+    const result = await callFunction('delete-user', { user_id: id });
+
+    if (result.error) {
+      userErrorMsg.textContent = result.error;
+      userErrorMsg.classList.remove('hidden');
+      deleteBtn.disabled    = false;
+      deleteBtn.textContent = 'Delete';
+      return;
+    }
+
+    loadUsers();
+  }
+});
+
 // ── Helper ────────────────────────────────────────────────────
 function escape(str) {
   if (!str) return '';
@@ -185,4 +384,5 @@ function escape(str) {
 // ── Init ─────────────────────────────────────────────────────
 loadMovements();
 loadGroups();
+loadUsers();
 initNav();

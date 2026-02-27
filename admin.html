@@ -26,6 +26,7 @@
     <div class="admin-tabs">
       <button class="admin-tab active" data-tab="videos">Videos</button>
       <button class="admin-tab" data-tab="tags">Tags</button>
+      <button class="admin-tab" data-tab="users">Users</button>
     </div>
 
     <!-- Videos panel -->
@@ -51,6 +52,28 @@
       <div id="error-msg" class="error hidden"></div>
 
       <ul id="group-list" class="admin-list">
+        <li class="status-msg">Loading…</li>
+      </ul>
+    </div>
+
+    <!-- Users panel -->
+    <div id="tab-users" class="admin-tab-panel hidden">
+
+      <!-- Invite form -->
+      <form id="invite-form" class="admin-add-form admin-invite-form">
+        <input type="email" id="invite-email" placeholder="Email address" required>
+        <input type="text"  id="invite-name"  placeholder="Full name" required>
+        <select id="invite-role">
+          <option value="coach">Coach</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button type="submit" class="btn btn-primary admin-add-btn">Invite</button>
+      </form>
+
+      <div id="user-success-msg" class="success hidden"></div>
+      <div id="user-error-msg"   class="error hidden"></div>
+
+      <ul id="user-list" class="admin-list">
         <li class="status-msg">Loading…</li>
       </ul>
     </div>

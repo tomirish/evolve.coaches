@@ -246,9 +246,10 @@ function enterEditMode(li, { id, name, role }) {
 inviteForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-  const email     = document.getElementById('invite-email').value.trim();
-  const full_name = document.getElementById('invite-name').value.trim();
-  const role      = document.getElementById('invite-role').value;
+  const email      = document.getElementById('invite-email').value.trim();
+  const full_name  = document.getElementById('invite-name').value.trim();
+  const role       = document.getElementById('invite-role').value;
+  const redirectTo = new URL('reset.html', window.location.href).href;
 
   userSuccessMsg.classList.add('hidden');
   userErrorMsg.classList.add('hidden');
@@ -257,7 +258,7 @@ inviteForm.addEventListener('submit', async (e) => {
   submitBtn.disabled    = true;
   submitBtn.textContent = 'Inviting…';
 
-  const result = await callFunction('invite-user', { email, full_name, role });
+  const result = await callFunction('invite-user', { email, full_name, role, redirectTo });
 
   submitBtn.disabled    = false;
   submitBtn.textContent = 'Invite';

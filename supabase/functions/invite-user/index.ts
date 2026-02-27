@@ -47,7 +47,7 @@ Deno.serve(async (req) => {
       })
     }
 
-    const { email, full_name, role } = await req.json()
+    const { email, full_name, role, redirectTo } = await req.json()
     if (!email || !full_name || !role) {
       return new Response(JSON.stringify({ error: 'Missing required fields: email, full_name, role' }), {
         status: 400,
@@ -62,7 +62,10 @@ Deno.serve(async (req) => {
     )
 
     // Invite the user — Supabase sends the invite email automatically
-    const { data: { user: newUser }, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(email)
+    const { data: { user: newUser }, error: inviteError } = await adminClient.auth.admin.inviteUserByEmail(
+      email,
+      redirectTo ? { redirectTo } : {}
+    )
     if (inviteError) throw inviteError
 
     // Create their profile row

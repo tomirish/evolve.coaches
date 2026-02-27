@@ -249,7 +249,9 @@ inviteForm.addEventListener('submit', async (e) => {
   const email      = document.getElementById('invite-email').value.trim();
   const full_name  = document.getElementById('invite-name').value.trim();
   const role       = document.getElementById('invite-role').value;
-  const redirectTo = new URL('reset.html', window.location.href).href;
+  const inviteUrl  = new URL('reset.html', window.location.href);
+  inviteUrl.searchParams.set('mode', 'invite');
+  const redirectTo = inviteUrl.href;
 
   userSuccessMsg.classList.add('hidden');
   userErrorMsg.classList.add('hidden');

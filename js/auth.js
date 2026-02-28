@@ -69,6 +69,15 @@ async function initNav() {
   }
 }
 
+function escape(str) {
+  if (!str) return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
 function getInitials(fullName) {
   if (!fullName) return '?';
   const parts = fullName.trim().split(/\s+/);

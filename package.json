@@ -2,7 +2,6 @@
   "name": "evolve.coaches",
   "version": "1.0.0",
   "description": "Private video library for coaches at Evolve Strong Fitness",
-  "main": "index.js",
   "scripts": {
     "test": "op run --env-file=.env.op -- playwright test",
     "test:ui": "op run --env-file=.env.op -- playwright test --ui"

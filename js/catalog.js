@@ -86,15 +86,6 @@ function formatGroups(groups) {
   return groups.join(' · ');
 }
 
-function escape(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 // ── Events ───────────────────────────────────────────────────
 searchEl.addEventListener('input', render);
 

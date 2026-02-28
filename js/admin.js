@@ -277,25 +277,10 @@ const userSuccessMsg = document.getElementById('user-success-msg');
 const userErrorMsg   = document.getElementById('user-error-msg');
 const inviteForm     = document.getElementById('invite-form');
 
-async function callFunction(name, body = null) {
-  const { data: { session } } = await client.auth.getSession();
-  if (!session) return { error: 'Not authenticated' };
-  const { data, error } = await client.functions.invoke(name, {
-    body: body || undefined,
-    headers: { Authorization: `Bearer ${session.access_token}` },
-  });
-  if (error) {
-    const ctx = error.context;
-    if (ctx && typeof ctx === 'object' && ctx.error) return { error: ctx.error };
-    return { error: error.message };
-  }
-  return data;
-}
-
 async function loadUsers() {
   userList.innerHTML = '<li class="status-msg">Loading…</li>';
 
-  const result = await callFunction('list-users');
+  const result = await callEdgeFunction('list-users');
   if (result.error) {
     userList.innerHTML = '<li class="status-msg error">Failed to load users. Please refresh.</li>';
     return;
@@ -369,7 +354,7 @@ inviteForm.addEventListener('submit', async (e) => {
   submitBtn.disabled    = true;
   submitBtn.textContent = 'Inviting…';
 
-  const result = await callFunction('invite-user', { email, full_name, role, redirectTo });
+  const result = await callEdgeFunction('invite-user', { email, full_name, role, redirectTo });
 
   submitBtn.disabled    = false;
   submitBtn.textContent = 'Invite';
@@ -468,7 +453,7 @@ userList.addEventListener('click', async (e) => {
     userSuccessMsg.classList.add('hidden');
     userErrorMsg.classList.add('hidden');
 
-    const result = await callFunction('delete-user', { user_id: id });
+    const result = await callEdgeFunction('delete-user', { user_id: id });
 
     if (result.error) {
       userErrorMsg.textContent = result.error;
@@ -481,16 +466,6 @@ userList.addEventListener('click', async (e) => {
     loadUsers();
   }
 });
-
-// ── Helper ────────────────────────────────────────────────────
-function escape(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
 
 // ── Init ─────────────────────────────────────────────────────
 loadMovements();

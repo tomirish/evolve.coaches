@@ -43,7 +43,7 @@ async function loadMuscleGroups() {
   }
 
   pillGroup.innerHTML = data.map(g =>
-    `<label class="pill"><input type="checkbox" value="${escapeAttr(g.name)}"> ${escapeHtml(g.name)}</label>`
+    `<label class="pill"><input type="checkbox" value="${escape(g.name)}"> ${escape(g.name)}</label>`
   ).join('');
 }
 
@@ -151,19 +151,6 @@ function resetUI() {
   submitBtn.textContent = 'Upload Movement';
   progressWrap.classList.add('hidden');
   progressFill.style.width = '0%';
-}
-
-function escapeHtml(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
-function escapeAttr(str) {
-  if (!str) return '';
-  return str.replace(/"/g, '&quot;');
 }
 
 // ── Init ─────────────────────────────────────────────────────

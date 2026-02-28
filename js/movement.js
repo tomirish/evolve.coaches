@@ -370,16 +370,6 @@ async function replaceVideo() {
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB
 
-// ── Helper ───────────────────────────────────────────────────
-function escape(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 // ── Init ─────────────────────────────────────────────────────
 load();
 initNav();

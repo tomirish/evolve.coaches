@@ -158,16 +158,6 @@ tagList.addEventListener('click', async (e) => {
   loadTags();
 });
 
-// ── Helper ────────────────────────────────────────────────────
-function escape(str) {
-  if (!str) return '';
-  return str
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
 // ── Init ──────────────────────────────────────────────────────
 loadTags();
 initNav();

@@ -248,6 +248,11 @@ function enterEditMode(li, { id, name, role }) {
     <button class="btn-sm btn-save-user">Save</button>
     <button class="btn-sm btn-cancel-edit">Cancel</button>
   `;
+
+  const input = infoDiv.querySelector('input.edit-inline');
+  const resize = () => { input.style.width = Math.max(12, input.value.length + 2) + 'ch'; };
+  resize();
+  input.addEventListener('input', resize);
 }
 
 inviteForm.addEventListener('submit', async (e) => {

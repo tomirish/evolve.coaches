@@ -922,6 +922,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
 }
 
 .admin-user-name {
@@ -967,6 +969,8 @@ body {
   background: var(--white);
   outline: none;
   margin-bottom: 0.25rem;
+  min-width: 12ch;
+  max-width: 100%;
 }
 
 .edit-inline:focus {

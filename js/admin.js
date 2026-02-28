@@ -200,17 +200,18 @@ groupList.addEventListener('click', async (e) => {
   // Save
   const saveBtn = e.target.closest('.btn-save-tag');
   if (saveBtn) {
-    const li   = saveBtn.closest('li');
-    const id   = li.dataset.id;
-    const name = li.querySelector('input.edit-inline').value.trim();
+    const li      = saveBtn.closest('li');
+    const id      = li.dataset.id;
+    const oldName = li.dataset.name;
+    const newName = li.querySelector('input.edit-inline').value.trim();
 
-    if (!name) return;
+    if (!newName) return;
 
     saveBtn.disabled    = true;
     saveBtn.textContent = 'Saving…';
     tagErrorMsg.classList.add('hidden');
 
-    const { error } = await client.from('tags').update({ name }).eq('id', id);
+    const { error } = await client.from('tags').update({ name: newName }).eq('id', id);
 
     if (error) {
       tagErrorMsg.textContent = 'Failed to save. Please try again.';
@@ -218,6 +219,19 @@ groupList.addEventListener('click', async (e) => {
       saveBtn.disabled    = false;
       saveBtn.textContent = 'Save';
       return;
+    }
+
+    // Update all movements that use the old tag name
+    const { data: movements } = await client
+      .from('movements')
+      .select('id, tags')
+      .contains('tags', [oldName]);
+
+    for (const m of movements || []) {
+      await client
+        .from('movements')
+        .update({ tags: m.tags.map(t => t === oldName ? newName : t) })
+        .eq('id', m.id);
     }
 
     loadGroups();

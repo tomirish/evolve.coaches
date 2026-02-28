@@ -142,10 +142,7 @@ async function loadGroups() {
     const countLabel = count === 0 ? 'Not used' : `Used on ${count} movement${count === 1 ? '' : 's'}`;
     return `
       <li class="admin-list-item">
-        <div>
-          <span>${escape(g.name)}</span>
-          <div class="admin-item-date">${countLabel}</div>
-        </div>
+        <span>${escape(g.name)} <span class="admin-item-date">&middot; ${countLabel}</span></span>
         <button class="btn-delete" data-id="${g.id}" data-name="${escape(g.name)}" data-count="${count}">Delete</button>
       </li>
     `;

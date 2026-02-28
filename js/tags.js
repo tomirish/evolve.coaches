@@ -41,10 +41,7 @@ function renderTags(data) {
     const countLabel = t.count === 0 ? 'Not used' : `Used on ${t.count} movement${t.count === 1 ? '' : 's'}`;
     return `
       <li class="admin-list-item">
-        <div>
-          <span>${escape(t.name)}</span>
-          <div class="admin-item-date">${countLabel}</div>
-        </div>
+        <span>${escape(t.name)} <span class="admin-item-date">&middot; ${countLabel}</span></span>
         <button class="btn-sm btn-edit-tag" data-id="${t.id}" data-name="${escape(t.name)}">Edit</button>
       </li>
     `;

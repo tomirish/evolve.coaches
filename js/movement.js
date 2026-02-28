@@ -37,7 +37,6 @@ async function load() {
   movement.signedUrl    = signedResult.signedUrl;
   movement.uploaderName = uploaderResult.data?.full_name || null;
   renderView();
-  initNav();
 }
 
 // ── View mode ────────────────────────────────────────────────
@@ -360,3 +359,4 @@ function escape(str) {
 
 // ── Init ─────────────────────────────────────────────────────
 load();
+initNav();

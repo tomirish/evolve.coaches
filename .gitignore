@@ -2,3 +2,7 @@ CLAUDE.md
 .claude/
 .DS_Store
 supabase/.temp/
+.env
+node_modules/
+playwright-report/
+test-results/

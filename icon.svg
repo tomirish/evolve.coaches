@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Three mountain peaks matching favicon.png — transparent background -->
+  <polygon points="1,50 15,25 29,50" fill="#b8d0d0"/>
+  <polygon points="17,50 30,17 43,50" fill="#70b8b0"/>
+  <polygon points="34,50 48,10 62,50" fill="#309080"/>
+</svg>

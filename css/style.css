@@ -312,7 +312,7 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   font-family: inherit;
-  border: 2px solid rgba(255,255,255,0.3);
+  border: 2px solid rgba(255,255,255,0.75);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -324,7 +324,7 @@ body {
 
 .nav-avatar:hover {
   background: var(--accent-hover);
-  border-color: rgba(255,255,255,0.6);
+  border-color: var(--white);
 }
 
 .nav-menu-separator {

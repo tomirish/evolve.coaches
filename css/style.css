@@ -990,13 +990,13 @@ body {
    MOBILE  (max 600px)
    ============================================================ */
 @media (max-width: 600px) {
-  /* Hide brand name — too long for small screens */
-  .nav .brand {
+  /* Hide brand text on small screens — keep logo */
+  .nav .brand-name {
     display: none;
   }
 
   .nav {
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 0 1rem;
   }
 

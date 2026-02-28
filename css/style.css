@@ -809,6 +809,10 @@ body {
   margin-bottom: 1rem;
 }
 
+.admin-invite-form {
+  grid-template-columns: 2fr 2fr 1fr auto;
+}
+
 .admin-add-form input {
   flex: 1;
   padding: 0.625rem 0.875rem;
@@ -1052,6 +1056,12 @@ select.edit-inline {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.75rem;
+  }
+
+  /* Tags page items are just name + one button — keep them in a row */
+  #tag-list .admin-list-item {
+    flex-direction: row;
+    align-items: center;
   }
 
   .admin-user-actions {

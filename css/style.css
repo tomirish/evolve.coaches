@@ -1013,7 +1013,8 @@ body {
 
   .nav-links a,
   .nav-user-btn {
-    font-size: 0.8125rem;
+    font-size: 1rem;
+    color: var(--white);
   }
 
   /* Reduce page padding */

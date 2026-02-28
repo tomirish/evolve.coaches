@@ -34,6 +34,13 @@ A private video library for coaches at [Evolve Strong Fitness](https://evolvestr
 ### Prerequisites
 - [1Password CLI](https://developer.1password.com/docs/cli/) — credentials are stored in a 1Password vault, not `.env` files
 - Node.js
+- Python 3 — used as the local HTTP server during tests
+
+### Setup
+```bash
+npm install
+npx playwright install chromium
+```
 
 ### Running tests
 ```bash
@@ -41,4 +48,4 @@ npm test          # headless
 npm run test:ui   # headed / interactive
 ```
 
-Tests run against a local Python HTTP server and use real Supabase credentials injected via 1Password CLI. CI runs the same suite automatically on every push to `develop`.
+Tests run against a local Python HTTP server with real Supabase credentials injected via 1Password CLI. CI runs the same suite on every push to `develop` and auto-merges to `main` on pass.

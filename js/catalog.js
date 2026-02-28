@@ -118,3 +118,7 @@ filterBar.addEventListener('click', (e) => {
 
 // ── Init ─────────────────────────────────────────────────────
 load();
+
+// Warm up the r2-signed-url edge function in the background so the
+// first movement page load doesn't hit a cold start
+callEdgeFunction('r2-signed-url', { path: '__warmup__' });

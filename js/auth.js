@@ -37,15 +37,17 @@ async function initNav() {
   const profile = await getProfile();
   if (!profile) return;
 
-  const isAdmin   = profile.role === 'admin';
-  const adminItem = isAdmin ? '<a href="admin.html">Admin</a>' : '';
+  const isAdmin    = profile.role === 'admin';
+  const adminItem  = isAdmin ? '<a href="admin.html">Admin</a>' : '';
+  const rawFirst   = profile.full_name ? profile.full_name.split(' ')[0] : 'there';
+  const firstName  = rawFirst.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
   const signOutBtn = document.querySelector('.nav-signout');
   if (signOutBtn) {
     const wrapper = document.createElement('div');
     wrapper.className = 'nav-user';
     wrapper.innerHTML = `
-      <button class="nav-user-btn nav-more-btn">•••</button>
+      <button class="nav-user-btn nav-more-btn">Hi, ${firstName} •••</button>
       <div class="nav-user-menu hidden">
         <a href="tags.html">Tags</a>
         ${adminItem}

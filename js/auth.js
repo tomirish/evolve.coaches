@@ -37,35 +37,32 @@ async function initNav() {
   const profile = await getProfile();
   if (!profile) return;
 
-  if (profile.role === 'admin') {
-    const adminLink = document.getElementById('admin-link');
-    if (adminLink) adminLink.classList.remove('hidden');
-  }
+  const isAdmin   = profile.role === 'admin';
+  const adminItem = isAdmin ? '<a href="admin.html">Admin</a>' : '';
 
-  const rawFirstName = profile.full_name ? profile.full_name.split(' ')[0] : 'Me';
-  const firstName    = rawFirstName.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   const signOutBtn = document.querySelector('.nav-signout');
   if (signOutBtn) {
     const wrapper = document.createElement('div');
     wrapper.className = 'nav-user';
     wrapper.innerHTML = `
-      <button class="nav-user-btn">Hi, ${firstName} <span class="nav-caret">▾</span></button>
+      <button class="nav-user-btn nav-more-btn">•••</button>
       <div class="nav-user-menu hidden">
-        <a href="account.html">Account</a>
+        <a href="tags.html">Tags</a>
+        ${adminItem}
+        <a href="account.html" class="nav-menu-separator">Account</a>
         <button class="nav-user-signout">Sign Out</button>
       </div>
     `;
     signOutBtn.parentNode.replaceChild(wrapper, signOutBtn);
 
-    const userBtn     = wrapper.querySelector('.nav-user-btn');
-    const menu        = wrapper.querySelector('.nav-user-menu');
-    const menuSignOut = wrapper.querySelector('.nav-user-signout');
+    const moreBtn = wrapper.querySelector('.nav-more-btn');
+    const menu    = wrapper.querySelector('.nav-user-menu');
 
-    userBtn.addEventListener('click', (e) => {
+    moreBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       menu.classList.toggle('hidden');
     });
-    menuSignOut.addEventListener('click', signOut);
+    wrapper.querySelector('.nav-user-signout').addEventListener('click', signOut);
     document.addEventListener('click', () => menu.classList.add('hidden'));
   }
 }

@@ -302,6 +302,14 @@ body {
   border-top: 1px solid var(--border) !important;
 }
 
+.nav-more-btn {
+  letter-spacing: 0.15em;
+}
+
+.nav-menu-separator {
+  border-top: 1px solid var(--border) !important;
+}
+
 /* ============================================================
    PAGE LAYOUT
    ============================================================ */
@@ -969,7 +977,6 @@ body {
   }
 
   .nav-links a,
-  .nav-signout,
   .nav-user-btn {
     font-size: 0.8125rem;
   }

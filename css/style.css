@@ -217,20 +217,14 @@ body {
 }
 
 .nav-signout {
-  background: none;
-  border: 1px solid rgba(255,255,255,0.3);
-  color: rgba(255,255,255,0.75);
-  border-radius: var(--radius);
-  padding: 0.35rem 0.875rem;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.nav-signout:hover {
-  color: var(--white);
-  border-color: rgba(255,255,255,0.6);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  flex-shrink: 0;
+  font-size: 0;
+  overflow: hidden;
 }
 
 .nav-user {

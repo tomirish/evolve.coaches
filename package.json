@@ -1,12 +1,11 @@
 {
   "name": "evolve.coaches",
   "version": "1.0.0",
-  "description": "**Status:** [![Live Site](https://img.shields.io/badge/Site-evolve.coaches-green)](https://tomirish.github.io/evolve.coaches/) [![GitHub Pages](https://img.shields.io/badge/Host-GitHub_Pages-222)](https://pages.github.com)",
+  "description": "Private video library for coaches at Evolve Strong Fitness",
   "main": "index.js",
   "scripts": {
     "test": "op run --env-file=.env.op -- playwright test",
-    "test:ui": "op run --env-file=.env.op -- playwright test --ui",
-    "migrate": "op run --env-file=.env.op -- node scripts/migrate-videos-to-r2.js"
+    "test:ui": "op run --env-file=.env.op -- playwright test --ui"
   },
   "repository": {
     "type": "git",
@@ -21,8 +20,6 @@
   },
   "homepage": "https://github.com/tomirish/evolve.coaches#readme",
   "devDependencies": {
-    "@aws-sdk/client-s3": "^3.1000.0",
-    "@playwright/test": "^1.58.2",
-    "@supabase/supabase-js": "^2.98.0"
+    "@playwright/test": "^1.58.2"
   }
 }

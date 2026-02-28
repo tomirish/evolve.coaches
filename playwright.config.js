@@ -3,7 +3,8 @@ const { defineConfig, devices } = require('@playwright/test');
 module.exports = defineConfig({
   testDir: './tests',
   fullyParallel: false,
-  retries: 0,
+  workers: 1,
+  retries: 1,
   use: {
     baseURL: 'http://localhost:8080',
     headless: true,

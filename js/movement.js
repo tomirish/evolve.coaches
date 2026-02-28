@@ -25,16 +25,16 @@ async function load() {
   muscleGroups = (groupsResult.data || []).map(g => g.name);
 
   const [signedResult, uploaderResult] = await Promise.all([
-    client.storage.from('videos').createSignedUrl(movement.video_path, 86400),
+    callEdgeFunction('r2-signed-url', { path: movement.video_path }),
     client.from('profiles').select('full_name').eq('id', movement.uploaded_by).single()
   ]);
 
-  if (signedResult.error || !signedResult.data) {
+  if (signedResult.error || !signedResult.signedUrl) {
     contentEl.innerHTML = '<p class="status-msg error">Could not load video. Please try again.</p>';
     return;
   }
 
-  movement.signedUrl    = signedResult.data.signedUrl;
+  movement.signedUrl    = signedResult.signedUrl;
   movement.uploaderName = uploaderResult.data?.full_name || null;
   renderView();
   initNav();
@@ -197,7 +197,7 @@ async function deleteMovement() {
     return;
   }
 
-  const { error: storageError } = await client.storage.from('videos').remove([movement.video_path]);
+  const { error: storageError } = await callEdgeFunction('r2-delete', { path: movement.video_path });
   if (storageError) console.error('Storage delete failed:', movement.video_path, storageError);
 
   window.location.href = 'catalog.html';
@@ -278,17 +278,23 @@ async function replaceVideo() {
   const ext      = file.name.split('.').pop();
   const filename = `${crypto.randomUUID()}.${ext}`;
 
-  const { data: storageData, error: storageError } = await client.storage
-    .from('videos')
-    .upload(filename, file, {
-      onUploadProgress: (progress) => {
-        const pct = Math.round((progress.loaded / progress.total) * 100);
-        progressFill.style.width = `${pct}%`;
-        progressText.textContent = `Uploading… ${pct}%`;
-      }
-    });
+  const urlResult = await callEdgeFunction('r2-upload-url', { filename });
+  if (urlResult.error) {
+    replaceError.textContent = 'Upload failed. Please try again.';
+    replaceError.classList.remove('hidden');
+    replaceBtn.disabled    = false;
+    replaceBtn.textContent = 'Replace Video';
+    progressWrap.classList.add('hidden');
+    progressFill.style.width = '0%';
+    return;
+  }
 
-  if (storageError) {
+  try {
+    await uploadToR2(file, urlResult.uploadUrl, (pct) => {
+      progressFill.style.width = `${pct}%`;
+      progressText.textContent = `Uploading… ${pct}%`;
+    });
+  } catch {
     replaceError.textContent = 'Upload failed. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
@@ -302,11 +308,11 @@ async function replaceVideo() {
 
   const { error: dbError } = await client
     .from('movements')
-    .update({ video_path: storageData.path })
+    .update({ video_path: filename })
     .eq('id', id);
 
   if (dbError) {
-    await client.storage.from('videos').remove([filename]);
+    await callEdgeFunction('r2-delete', { path: filename });
     replaceError.textContent = 'Failed to save. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
@@ -316,15 +322,12 @@ async function replaceVideo() {
     return;
   }
 
-  const { error: oldFileError } = await client.storage.from('videos').remove([oldPath]);
+  const { error: oldFileError } = await callEdgeFunction('r2-delete', { path: oldPath });
   if (oldFileError) console.error('Storage delete failed for old video:', oldPath, oldFileError);
-  movement.video_path = storageData.path;
+  movement.video_path = filename;
 
-  const { data: signed } = await client.storage
-    .from('videos')
-    .createSignedUrl(movement.video_path, 86400);
-
-  if (signed) {
+  const signed = await callEdgeFunction('r2-signed-url', { path: movement.video_path });
+  if (signed && signed.signedUrl) {
     movement.signedUrl = signed.signedUrl;
     const videoEl = document.querySelector('#video-player source');
     if (videoEl) {

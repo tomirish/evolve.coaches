@@ -80,3 +80,40 @@ async function signOut() {
   await client.auth.signOut();
   window.location.href = 'index.html';
 }
+
+async function callEdgeFunction(name, body = null) {
+  const { data: { session } } = await client.auth.getSession();
+  if (!session) return { error: 'Not authenticated' };
+  const { data, error } = await client.functions.invoke(name, {
+    body: body || undefined,
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  if (error) {
+    const ctx = error.context;
+    if (ctx && typeof ctx === 'object' && ctx.error) return { error: ctx.error };
+    return { error: error.message };
+  }
+  return data;
+}
+
+function uploadToR2(file, uploadUrl, onProgress) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable && onProgress) {
+        onProgress(Math.round((e.loaded / e.total) * 100));
+      }
+    });
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+      } else {
+        reject(new Error(`Upload failed: ${xhr.status}`));
+      }
+    });
+    xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+    xhr.open('PUT', uploadUrl);
+    xhr.setRequestHeader('Content-Type', file.type || 'video/mp4');
+    xhr.send(file);
+  });
+}

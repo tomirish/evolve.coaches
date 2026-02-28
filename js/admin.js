@@ -107,8 +107,11 @@ function formatDate(iso) {
 }
 
 // ── Tags ──────────────────────────────────────────────────────
-const groupList = document.getElementById('group-list');
-const errorMsg  = document.getElementById('error-msg');
+let allTags = [];
+
+const groupList    = document.getElementById('group-list');
+const tagErrorMsg  = document.getElementById('tag-error-msg');
+const tagSearch    = document.getElementById('tag-search');
 
 async function loadGroups() {
   groupList.innerHTML = '<li class="status-msg">Loading…</li>';
@@ -132,47 +135,121 @@ async function loadGroups() {
     usageMap[t] = (usageMap[t] || 0) + 1;
   }));
 
-  if (tags.length === 0) {
-    groupList.innerHTML = '<li class="status-msg">No tags yet.</li>';
+  allTags = tags.map(g => ({ ...g, count: usageMap[g.name] || 0 }));
+  applyTagSearch();
+}
+
+function applyTagSearch() {
+  const query    = tagSearch.value.trim().toLowerCase();
+  const filtered = query
+    ? allTags.filter(g => g.name.toLowerCase().includes(query))
+    : allTags;
+  renderTags(filtered);
+}
+
+function renderTags(data) {
+  if (data.length === 0) {
+    groupList.innerHTML = '<li class="status-msg">No tags found.</li>';
     return;
   }
 
-  groupList.innerHTML = tags.map(g => {
-    const count      = usageMap[g.name] || 0;
-    const countLabel = count === 0 ? 'Not used' : `Used on ${count} movement${count === 1 ? '' : 's'}`;
+  groupList.innerHTML = data.map(g => {
+    const countLabel = g.count === 0 ? 'Not used' : `Used on ${g.count} movement${g.count === 1 ? '' : 's'}`;
     return `
-      <li class="admin-list-item">
-        <span>${escape(g.name)} <span class="admin-item-date">&middot; ${countLabel}</span></span>
-        <button class="btn-delete" data-id="${g.id}" data-name="${escape(g.name)}" data-count="${count}">Delete</button>
+      <li class="admin-list-item" data-id="${g.id}" data-name="${escape(g.name)}" data-count="${g.count}">
+        <div class="admin-user-info">
+          <span class="tag-name">${escape(g.name)}</span>
+          <span class="admin-item-date">${countLabel}</span>
+        </div>
+        <div class="admin-user-actions">
+          <button class="btn-sm btn-edit-tag">Edit</button>
+          <button class="btn-delete btn-delete-tag">Delete</button>
+        </div>
       </li>
     `;
   }).join('');
 }
 
+tagSearch.addEventListener('input', applyTagSearch);
+
 groupList.addEventListener('click', async (e) => {
-  const btn = e.target.closest('.btn-delete');
-  if (!btn) return;
+  // Edit
+  const editBtn = e.target.closest('.btn-edit-tag');
+  if (editBtn) {
+    const li         = editBtn.closest('li');
+    const { name }   = li.dataset;
+    const infoDiv    = li.querySelector('.admin-user-info');
+    const actionsDiv = li.querySelector('.admin-user-actions');
 
-  const { id, name, count } = btn.dataset;
-  const countNum = parseInt(count, 10);
-  const usageMsg = countNum > 0
-    ? ` It's used on ${countNum} movement${countNum === 1 ? '' : 's'}.`
-    : '';
+    infoDiv.innerHTML = `<input class="edit-inline" type="text" value="${escape(name)}">`;
+    actionsDiv.innerHTML = `
+      <button class="btn-sm btn-save-tag">Save</button>
+      <button class="btn-sm btn-cancel-tag">Cancel</button>
+    `;
 
-  if (!confirm(`Delete "${name}"?${usageMsg} This won't remove it from those movements.`)) return;
-
-  const { error } = await client
-    .from('tags')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    errorMsg.textContent = 'Failed to delete. Please try again.';
-    errorMsg.classList.remove('hidden');
+    const input = infoDiv.querySelector('input.edit-inline');
+    const resize = () => { input.style.width = Math.max(12, input.value.length + 2) + 'ch'; };
+    resize();
+    input.addEventListener('input', resize);
     return;
   }
 
-  loadGroups();
+  // Save
+  const saveBtn = e.target.closest('.btn-save-tag');
+  if (saveBtn) {
+    const li   = saveBtn.closest('li');
+    const id   = li.dataset.id;
+    const name = li.querySelector('input.edit-inline').value.trim();
+
+    if (!name) return;
+
+    saveBtn.disabled    = true;
+    saveBtn.textContent = 'Saving…';
+    tagErrorMsg.classList.add('hidden');
+
+    const { error } = await client.from('tags').update({ name }).eq('id', id);
+
+    if (error) {
+      tagErrorMsg.textContent = 'Failed to save. Please try again.';
+      tagErrorMsg.classList.remove('hidden');
+      saveBtn.disabled    = false;
+      saveBtn.textContent = 'Save';
+      return;
+    }
+
+    loadGroups();
+    return;
+  }
+
+  // Cancel
+  const cancelBtn = e.target.closest('.btn-cancel-tag');
+  if (cancelBtn) {
+    applyTagSearch();
+    return;
+  }
+
+  // Delete
+  const deleteBtn = e.target.closest('.btn-delete-tag');
+  if (deleteBtn) {
+    const li       = deleteBtn.closest('li');
+    const { id, name, count } = li.dataset;
+    const countNum = parseInt(count, 10);
+    const usageMsg = countNum > 0
+      ? ` It's used on ${countNum} movement${countNum === 1 ? '' : 's'}.`
+      : '';
+
+    if (!confirm(`Delete "${name}"?${usageMsg} This won't remove it from those movements.`)) return;
+
+    const { error } = await client.from('tags').delete().eq('id', id);
+
+    if (error) {
+      tagErrorMsg.textContent = 'Failed to delete. Please try again.';
+      tagErrorMsg.classList.remove('hidden');
+      return;
+    }
+
+    loadGroups();
+  }
 });
 
 // ── Users ─────────────────────────────────────────────────────

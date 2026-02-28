@@ -65,16 +65,17 @@ body {
 
 .auth-logo {
   display: block;
-  height: 80px;
+  height: 160px;
   width: auto;
-  margin: 0 auto 0.75rem;
+  margin: 0 auto 1rem;
 }
 
 .brand-sub {
   color: var(--text-muted);
-  font-size: 0.875rem;
-  margin-top: 0.25rem;
-  margin-bottom: 2rem;
+  font-size: 1.125rem;
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 1.75rem;
 }
 
 .auth-back {

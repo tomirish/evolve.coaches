@@ -294,8 +294,8 @@ body {
 
 .nav-user-menu a:hover,
 .nav-user-menu button:hover {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--accent);
+  color: var(--white);
 }
 
 .nav-user-signout {

@@ -11,18 +11,24 @@ let allTags = [];
 async function loadTags() {
   tagList.innerHTML = '<li class="status-msg">Loading…</li>';
 
-  const { data, error } = await client
-    .from('tags')
-    .select('id, name')
-    .order('name');
+  const [tagsResult, movementsResult] = await Promise.all([
+    client.from('tags').select('id, name').order('name'),
+    client.from('movements').select('tags'),
+  ]);
 
-  if (error) {
+  if (tagsResult.error) {
     tagList.innerHTML = '<li class="status-msg error">Failed to load. Please refresh.</li>';
     return;
   }
 
-  allTags = data;
-  renderTags(data);
+  // Build usage count map
+  const usageMap = {};
+  (movementsResult.data || []).forEach(m => (m.tags || []).forEach(t => {
+    usageMap[t] = (usageMap[t] || 0) + 1;
+  }));
+
+  allTags = tagsResult.data.map(t => ({ ...t, count: usageMap[t.name] || 0 }));
+  renderTags(allTags);
 }
 
 function renderTags(data) {
@@ -31,12 +37,18 @@ function renderTags(data) {
     return;
   }
 
-  tagList.innerHTML = data.map(t => `
-    <li class="admin-list-item">
-      <span>${escape(t.name)}</span>
-      <button class="btn-sm btn-edit-tag" data-id="${t.id}" data-name="${escape(t.name)}">Edit</button>
-    </li>
-  `).join('');
+  tagList.innerHTML = data.map(t => {
+    const countLabel = t.count === 0 ? 'Not used' : `Used on ${t.count} movement${t.count === 1 ? '' : 's'}`;
+    return `
+      <li class="admin-list-item">
+        <div>
+          <span>${escape(t.name)}</span>
+          <div class="admin-item-date">${countLabel}</div>
+        </div>
+        <button class="btn-sm btn-edit-tag" data-id="${t.id}" data-name="${escape(t.name)}">Edit</button>
+      </li>
+    `;
+  }).join('');
 }
 
 function enterEditMode(li, id, name) {

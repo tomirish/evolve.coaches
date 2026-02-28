@@ -303,8 +303,27 @@ body {
   border-top: 1px solid var(--border) !important;
 }
 
-.nav-more-btn {
-  letter-spacing: 0.15em;
+.nav-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-family: inherit;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.nav-avatar:hover {
+  background: var(--accent-hover);
 }
 
 .nav-menu-separator {

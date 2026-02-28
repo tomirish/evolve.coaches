@@ -24,14 +24,32 @@ async function load() {
   movement     = movementResult.data;
   muscleGroups = (groupsResult.data || []).map(g => g.name);
 
+  // Check cache before calling edge function (signed URLs last 24h)
+  const cacheKey = `signed-url:${movement.video_path}`;
+  const cached   = sessionStorage.getItem(cacheKey);
+  let signedUrl  = null;
+
+  if (cached) {
+    const { url, expires } = JSON.parse(cached);
+    if (Date.now() < expires) signedUrl = url;
+  }
+
   const [signedResult, uploaderResult] = await Promise.all([
-    callEdgeFunction('r2-signed-url', { path: movement.video_path }),
+    signedUrl ? Promise.resolve({ signedUrl }) : callEdgeFunction('r2-signed-url', { path: movement.video_path }),
     client.from('profiles').select('full_name').eq('id', movement.uploaded_by).single()
   ]);
 
   if (signedResult.error || !signedResult.signedUrl) {
     contentEl.innerHTML = '<p class="status-msg error">Could not load video. Please try again.</p>';
     return;
+  }
+
+  if (!signedUrl) {
+    // Cache for 23 hours to stay within the 24h expiry
+    sessionStorage.setItem(cacheKey, JSON.stringify({
+      url:     signedResult.signedUrl,
+      expires: Date.now() + 23 * 60 * 60 * 1000,
+    }));
   }
 
   movement.signedUrl    = signedResult.signedUrl;

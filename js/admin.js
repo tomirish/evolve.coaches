@@ -66,7 +66,7 @@ function renderMovements(data) {
         <div class="admin-item-date">Uploaded by ${escape(m.uploaderName)} · ${formatDate(m.created_at)}</div>
       </div>
       <div class="admin-user-actions">
-        <button class="btn-sm" onclick="location.href='movement.html?id=${m.id}'">Edit</button>
+        <button class="btn-sm" onclick="location.href='movement.html?id=${m.id}&edit=1'">Edit</button>
         <button class="btn-delete" data-id="${m.id}" data-name="${escape(m.name)}" data-path="${escape(m.video_path)}">Delete</button>
       </div>
     </li>

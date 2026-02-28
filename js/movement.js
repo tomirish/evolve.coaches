@@ -54,7 +54,12 @@ async function load() {
 
   movement.signedUrl    = signedResult.signedUrl;
   movement.uploaderName = uploaderResult.data?.full_name || null;
-  renderView();
+
+  if (params.get('edit') === '1') {
+    renderEdit();
+  } else {
+    renderView();
+  }
 }
 
 // ── View mode ────────────────────────────────────────────────

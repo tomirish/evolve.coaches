@@ -97,7 +97,7 @@ movementList.addEventListener('click', async (e) => {
     return;
   }
 
-  const { error: storageError } = await client.storage.from('videos').remove([path]);
+  const { error: storageError } = await callEdgeFunction('r2-delete', { path });
   if (storageError) console.error('Storage delete failed:', path, storageError);
   loadMovements();
 });

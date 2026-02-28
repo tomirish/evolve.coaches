@@ -100,17 +100,19 @@ form.addEventListener('submit', async (e) => {
   const ext      = file.name.split('.').pop();
   const filename = `${crypto.randomUUID()}.${ext}`;
 
-  const { data: storageData, error: storageError } = await client.storage
-    .from('videos')
-    .upload(filename, file, {
-      onUploadProgress: (progress) => {
-        const pct = Math.round((progress.loaded / progress.total) * 100);
-        progressFill.style.width = `${pct}%`;
-        progressText.textContent = `Uploading… ${pct}%`;
-      }
-    });
+  const urlResult = await callEdgeFunction('r2-upload-url', { filename });
+  if (urlResult.error) {
+    showError('Video upload failed. Please try again.');
+    resetUI();
+    return;
+  }
 
-  if (storageError) {
+  try {
+    await uploadToR2(file, urlResult.uploadUrl, (pct) => {
+      progressFill.style.width = `${pct}%`;
+      progressText.textContent = `Uploading… ${pct}%`;
+    });
+  } catch {
     showError('Video upload failed. Please try again.');
     resetUI();
     return;
@@ -124,13 +126,12 @@ form.addEventListener('submit', async (e) => {
       alt_names,
       tags,
       comments: comments || null,
-      video_path: storageData.path,
+      video_path: filename,
       uploaded_by: session.user.id
     });
 
   if (dbError) {
-    const { error: storageError } = await client.storage.from('videos').remove([filename]);
-    if (storageError) console.error('Storage cleanup failed:', filename, storageError);
+    await callEdgeFunction('r2-delete', { path: filename });
     showError('Failed to save movement. Please try again.');
     resetUI();
     return;

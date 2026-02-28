@@ -95,7 +95,7 @@ test.describe('Mobile layout (390px)', () => {
     await page.goto('/admin.html');
     await page.locator('.admin-tab[data-tab="tags"]').click();
     await page.waitForSelector('#group-list .admin-list-item');
-    const box = await page.locator('#group-list .tag-name').first().boundingBox();
+    const box = await page.locator('#group-list .admin-list-item > span').first().boundingBox();
     expect(box.width, 'Tag name collapsed to near-zero width').toBeGreaterThan(60);
     await noHorizontalScroll(page);
   });

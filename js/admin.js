@@ -160,10 +160,7 @@ function renderTags(data) {
     const countLabel = g.count === 0 ? 'Not used' : `Used on ${g.count} movement${g.count === 1 ? '' : 's'}`;
     return `
       <li class="admin-list-item" data-id="${g.id}" data-name="${escape(g.name)}" data-count="${g.count}">
-        <div class="admin-user-info">
-          <span class="tag-name">${escape(g.name)}</span>
-          <span class="admin-item-date">${countLabel}</span>
-        </div>
+        <span>${escape(g.name)} <span class="admin-item-date">&middot; ${countLabel}</span></span>
         <div class="admin-user-actions">
           <button class="btn-sm btn-edit-tag">Edit</button>
           <button class="btn-delete btn-delete-tag">Delete</button>
@@ -179,21 +176,20 @@ groupList.addEventListener('click', async (e) => {
   // Edit
   const editBtn = e.target.closest('.btn-edit-tag');
   if (editBtn) {
-    const li         = editBtn.closest('li');
-    const { name }   = li.dataset;
-    const infoDiv    = li.querySelector('.admin-user-info');
-    const actionsDiv = li.querySelector('.admin-user-actions');
+    const li       = editBtn.closest('li');
+    const { name } = li.dataset;
 
-    infoDiv.innerHTML = `<input class="edit-inline" type="text" value="${escape(name)}">`;
-    actionsDiv.innerHTML = `
-      <button class="btn-sm btn-save-tag">Save</button>
-      <button class="btn-sm btn-cancel-tag">Cancel</button>
+    li.innerHTML = `
+      <input class="edit-inline" type="text" value="${escape(name)}" style="flex:1">
+      <div style="display:flex;gap:0.5rem;flex-shrink:0;margin-left:0.75rem">
+        <button class="btn-sm btn-save-tag">Save</button>
+        <button class="btn-sm btn-cancel-tag">Cancel</button>
+      </div>
     `;
 
-    const input = infoDiv.querySelector('input.edit-inline');
-    const resize = () => { input.style.width = Math.max(12, input.value.length + 2) + 'ch'; };
-    resize();
-    input.addEventListener('input', resize);
+    const input = li.querySelector('.edit-inline');
+    input.focus();
+    input.select();
     return;
   }
 

@@ -109,7 +109,7 @@ test.describe('Desktop layout (1280px)', () => {
     await page.locator('.admin-tab[data-tab="tags"]').click();
     await page.waitForSelector('#group-list .admin-list-item');
     const firstItem = page.locator('#group-list .admin-list-item').first();
-    const nameEl    = firstItem.locator('.tag-name');
+    const nameEl    = firstItem.locator('span').first();
     const actionEl  = firstItem.locator('.admin-user-actions');
     expect(await isInRowWith(nameEl, actionEl), 'Tag name and actions should be side by side').toBe(true);
     await noHorizontalScroll(page);

@@ -939,6 +939,13 @@ body {
   font-weight: 600;
 }
 
+.tag-name {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .admin-user-actions {
   display: flex;
   gap: 0.5rem;
@@ -1033,5 +1040,17 @@ body {
 
   .admin-add-btn {
     width: 100%;
+  }
+
+  /* Stack user/tag list items vertically on mobile */
+  .admin-list-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .admin-user-actions {
+    width: 100%;
+    flex-wrap: wrap;
   }
 }

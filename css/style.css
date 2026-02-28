@@ -803,7 +803,8 @@ body {
 }
 
 .admin-add-form {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
   margin-bottom: 1rem;
 }
@@ -824,8 +825,7 @@ body {
 }
 
 .admin-add-btn {
-  flex-shrink: 0;
-  width: auto;
+  width: 100%;
 }
 
 .admin-list {
@@ -1019,7 +1019,7 @@ select.edit-inline {
     gap: 1rem;
   }
 
-  .nav-links a,
+  .nav-links > a,
   .nav-user-btn {
     font-size: 1rem;
     color: var(--white);
@@ -1044,11 +1044,7 @@ select.edit-inline {
 
   /* Stack admin add form */
   .admin-add-form {
-    flex-direction: column;
-  }
-
-  .admin-add-btn {
-    width: 100%;
+    grid-template-columns: 1fr;
   }
 
   /* Stack user/tag list items vertically on mobile */

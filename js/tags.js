@@ -51,7 +51,7 @@ function renderTags(data) {
 function enterEditMode(li, id, name) {
   li.innerHTML = `
     <input class="edit-inline" type="text" value="${escape(name)}" style="flex:1">
-    <div style="display:flex;gap:0.5rem;flex-shrink:0">
+    <div style="display:flex;gap:0.5rem;flex-shrink:0;margin-left:0.75rem">
       <button class="btn-sm btn-save-tag" data-id="${id}" data-oldname="${escape(name)}">Save</button>
       <button class="btn-sm btn-cancel-tag">Cancel</button>
     </div>

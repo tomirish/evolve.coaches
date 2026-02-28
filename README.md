@@ -20,12 +20,14 @@
 A private video library for coaches at [Evolve Strong Fitness](https://evolvestrongfitness.com). Coaches can upload training movement videos, tag them with metadata, and browse the catalog before sessions.
 
 ## Features
-- Secure login (coaches only)
+- Secure login with password reset (coaches only)
 - Upload videos with movement name, alternative names, tags, and comments
 - Browse movements with search, tag filters, and A–Z / Z–A / Recent sort — alternative names appear as their own catalog cards
-- Watch videos and edit metadata inline
-- Replace a video file without losing metadata
-- Admin page to manage tags and users
+- Watch videos and edit metadata inline; replace a video file without losing metadata
+- Signed video URLs via Cloudflare R2 with session caching for fast repeat loads
+- Tags page (all coaches) — add and rename tags used across the catalog
+- Admin page — invite and manage users, delete tags with usage counts
+- Mobile-responsive design
 
 ## Development
 

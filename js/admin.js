@@ -22,7 +22,7 @@ async function loadMovements() {
 
   const { data, error } = await client
     .from('movements')
-    .select('id, name, video_path, created_at')
+    .select('id, name, video_path, created_at, uploaded_by')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -30,7 +30,18 @@ async function loadMovements() {
     return;
   }
 
-  allMovements = data;
+  // Fetch uploader names in bulk
+  const uploaderIds = [...new Set(data.map(m => m.uploaded_by).filter(Boolean))];
+  let profileMap = {};
+  if (uploaderIds.length > 0) {
+    const { data: profiles } = await client
+      .from('profiles')
+      .select('id, full_name')
+      .in('id', uploaderIds);
+    (profiles || []).forEach(p => { profileMap[p.id] = p.full_name; });
+  }
+
+  allMovements = data.map(m => ({ ...m, uploaderName: profileMap[m.uploaded_by] || 'Unknown' }));
   applyMovementSearch();
 }
 
@@ -51,8 +62,8 @@ function renderMovements(data) {
   movementList.innerHTML = data.map(m => `
     <li class="admin-list-item">
       <div>
-        <div>${escape(m.name)}</div>
-        <div class="admin-item-date">${formatDate(m.created_at)}</div>
+        <a href="movement.html?id=${m.id}" class="admin-item-link">${escape(m.name)}</a>
+        <div class="admin-item-date">Uploaded by ${escape(m.uploaderName)} · ${formatDate(m.created_at)}</div>
       </div>
       <button class="btn-delete" data-id="${m.id}" data-name="${escape(m.name)}" data-path="${escape(m.video_path)}">Delete</button>
     </li>

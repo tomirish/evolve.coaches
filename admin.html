@@ -25,35 +25,13 @@
     <h1 class="page-title">Admin</h1>
 
     <div class="admin-tabs">
-      <button class="admin-tab active" data-tab="videos">Videos</button>
+      <button class="admin-tab active" data-tab="users">Users</button>
       <button class="admin-tab" data-tab="tags">Tags</button>
-      <button class="admin-tab" data-tab="users">Users</button>
-    </div>
-
-    <!-- Videos panel -->
-    <div id="tab-videos" class="admin-tab-panel">
-      <div class="admin-search">
-        <input type="search" id="movement-search" placeholder="Search movements…" class="search-input">
-      </div>
-
-      <div id="movement-error-msg" class="error hidden"></div>
-
-      <ul id="movement-list" class="admin-list">
-        <li class="status-msg">Loading…</li>
-      </ul>
-    </div>
-
-    <!-- Tags panel -->
-    <div id="tab-tags" class="admin-tab-panel hidden">
-      <div id="error-msg" class="error hidden"></div>
-
-      <ul id="group-list" class="admin-list">
-        <li class="status-msg">Loading…</li>
-      </ul>
+      <button class="admin-tab" data-tab="videos">Videos</button>
     </div>
 
     <!-- Users panel -->
-    <div id="tab-users" class="admin-tab-panel hidden">
+    <div id="tab-users" class="admin-tab-panel">
 
       <!-- Invite form -->
       <form id="invite-form" class="admin-add-form admin-invite-form">
@@ -70,6 +48,28 @@
       <div id="user-error-msg"   class="error hidden"></div>
 
       <ul id="user-list" class="admin-list">
+        <li class="status-msg">Loading…</li>
+      </ul>
+    </div>
+
+    <!-- Tags panel -->
+    <div id="tab-tags" class="admin-tab-panel hidden">
+      <div id="error-msg" class="error hidden"></div>
+
+      <ul id="group-list" class="admin-list">
+        <li class="status-msg">Loading…</li>
+      </ul>
+    </div>
+
+    <!-- Videos panel -->
+    <div id="tab-videos" class="admin-tab-panel hidden">
+      <div class="admin-search">
+        <input type="search" id="movement-search" placeholder="Search movements…" class="search-input">
+      </div>
+
+      <div id="movement-error-msg" class="error hidden"></div>
+
+      <ul id="movement-list" class="admin-list">
         <li class="status-msg">Loading…</li>
       </ul>
     </div>

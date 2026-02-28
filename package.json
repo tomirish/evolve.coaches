@@ -4,8 +4,8 @@
   "description": "**Status:** [![Live Site](https://img.shields.io/badge/Site-evolve.coaches-green)](https://tomirish.github.io/evolve.coaches/) [![GitHub Pages](https://img.shields.io/badge/Host-GitHub_Pages-222)](https://pages.github.com)",
   "main": "index.js",
   "scripts": {
-    "test": "playwright test",
-    "test:ui": "playwright test --ui"
+    "test": "op run --env-file=.env.op -- playwright test",
+    "test:ui": "op run --env-file=.env.op -- playwright test --ui"
   },
   "repository": {
     "type": "git",
@@ -20,7 +20,6 @@
   },
   "homepage": "https://github.com/tomirish/evolve.coaches#readme",
   "devDependencies": {
-    "@playwright/test": "^1.58.2",
-    "dotenv": "^17.3.1"
+    "@playwright/test": "^1.58.2"
   }
 }

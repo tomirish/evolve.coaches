@@ -15,6 +15,7 @@
     <div class="nav-links">
       <a href="catalog.html">Catalog</a>
       <a href="upload.html">Upload</a>
+      <a href="tags.html">Tags</a>
       <a href="admin.html" class="active">Admin</a>
       <button class="nav-signout" onclick="signOut()">Sign Out</button>
     </div>
@@ -44,11 +45,6 @@
 
     <!-- Tags panel -->
     <div id="tab-tags" class="admin-tab-panel hidden">
-      <form id="add-form" class="admin-add-form">
-        <input type="text" id="new-group" placeholder="New tag name" required>
-        <button type="submit" class="btn btn-primary admin-add-btn">Add</button>
-      </form>
-
       <div id="error-msg" class="error hidden"></div>
 
       <ul id="group-list" class="admin-list">

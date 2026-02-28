@@ -312,18 +312,19 @@ body {
   font-size: 0.75rem;
   font-weight: 700;
   font-family: inherit;
-  border: none;
+  border: 2px solid rgba(255,255,255,0.3);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   letter-spacing: 0.05em;
   flex-shrink: 0;
-  transition: background 0.15s;
+  transition: background 0.15s, border-color 0.15s;
 }
 
 .nav-avatar:hover {
   background: var(--accent-hover);
+  border-color: rgba(255,255,255,0.6);
 }
 
 .nav-menu-separator {

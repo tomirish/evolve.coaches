@@ -73,7 +73,7 @@ function renderView() {
     : '<span class="meta-none">None</span>';
 
   contentEl.innerHTML = `
-    <video class="video-player" controls playsinline>
+    <video class="video-player" controls playsinline autoplay muted loop>
       <source src="${movement.signedUrl}" type="video/mp4">
       Your browser does not support video playback.
     </video>

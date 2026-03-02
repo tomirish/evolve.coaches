@@ -282,12 +282,9 @@ async function loadUsers() {
     return;
   }
 
-  allUsers = result.users.sort((a, b) => {
-    const aTest = (a.full_name || '').startsWith('*** DO NOT REMOVE ***');
-    const bTest = (b.full_name || '').startsWith('*** DO NOT REMOVE ***');
-    if (aTest !== bTest) return aTest ? 1 : -1;
-    return (a.full_name || '').localeCompare(b.full_name || '');
-  });
+  allUsers = result.users
+    .filter(u => !(u.full_name || '').startsWith('*** DO NOT REMOVE ***'))
+    .sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
   renderUsers(allUsers);
 }
 

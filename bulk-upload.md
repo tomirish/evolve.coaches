@@ -2,13 +2,14 @@
 
 For importing large batches of videos (e.g. 300+), use the Node.js import script instead of the web UI. The script uploads each video directly to Cloudflare R2 and inserts the movement record into Supabase.
 
-## Before You Start
+## Prerequisites
 
-You'll need:
-- All video files in a single folder on your Mac
-- A `metadata.csv` file (see format below) in the same folder
-- R2 credentials (Access Key ID + Secret — in 1Password)
-- Supabase service role key (in 1Password / Supabase dashboard)
+The script needs to run on a Mac or PC with **Node.js** installed.
+- Download from [nodejs.org](https://nodejs.org) — install the LTS version
+- One-time setup, takes about 2 minutes
+- Tom will be present to help with this step
+
+Everything else is handled by the script itself.
 
 ## Folder Layout
 
@@ -68,6 +69,18 @@ The script will:
 5. Print a summary of successes and any errors
 
 If a video fails mid-run, fix the issue and re-run — the script will skip videos whose names already exist in the database.
+
+## Portability Note
+
+If the script needs to run on someone else's computer (e.g. the person who has the videos), the simplest approach is to **hardcode the credentials directly in the script** before handing it over. This is acceptable because:
+- It's a one-time use script, not committed to the repo
+- Tom will be present while it runs
+- The script gets deleted after the import is done
+
+Credentials needed (from 1Password):
+- R2 Access Key ID + Secret
+- R2 bucket name + endpoint
+- Supabase URL + service role key
 
 ## Open Questions
 

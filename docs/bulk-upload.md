@@ -134,8 +134,25 @@ test('bulk upload: form visible, no horizontal scroll', async ({ page }) => {
 
 ---
 
+## File Count Limits
+
+The browser, R2, and Supabase impose no hard limits on file count. The constraint is **time and session reliability**:
+
+| Avg video size | Upload speed | Time per video | 25 videos | 500 videos |
+|---|---|---|---|---|
+| 50 MB | 10 Mbps | ~40 sec | ~17 min | ~5.5 hours |
+| 100 MB | 10 Mbps | ~80 sec | ~33 min | ~11 hours |
+
+A browser session open for several hours is vulnerable to: computer sleep, network drops, tab crash, or a single stalled upload. There is no resume capability in the web UI.
+
+**Recommendation:** Soft-cap the web UI at **25 files per session** with a visible warning when the user exceeds it. For migrations of 50+ videos, direct coaches to the Node.js CLI script documented in `bulk-upload.md` (root), which is resumable and runs headlessly.
+
+The soft cap should be a named constant in `bulk-upload.js` (e.g. `const MAX_FILES = 25`) so it's easy to adjust after evaluation.
+
+---
+
 ## Open Questions
 
 - [ ] Should the bulk upload page be accessible to all coaches, or admins only?
-- [ ] Is there a max number of files per bulk upload session (e.g. 50)?
+- [ ] Confirm the soft file cap — 25 feels right for a web session but needs sign-off
 - [ ] Should failed rows be re-tryable individually without re-uploading successful ones?

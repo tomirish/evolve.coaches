@@ -1,158 +1,175 @@
-# Feature Spec: Bulk Upload Web UI
+# Bulk Upload — Feature Spec
 
 **Status:** Planned — not yet implemented  
-**Requested:** Coaches need to upload many videos at once without filling in optional metadata.
+**Decision needed:** Two implementation options are on the table. Coach feedback required before building.
 
 ---
 
 ## Background
 
-The existing `upload.html` handles one video at a time and requires a movement name + video file (minimum), with optional alt names, tags, and comments. This feature adds a `bulk-upload.html` page that lets coaches select multiple video files, confirm a movement name for each (auto-populated from the filename), and upload them all sequentially.
+The existing `upload.html` handles one video at a time. Coaches need a way to upload many videos at once. Two approaches are being evaluated — a **Web UI** built into the app, and a **Node.js CLI script** run locally on a computer with the video files.
 
-Optional fields (alt names, tags, comments) are intentionally omitted from the bulk form — coaches can fill those in later on the individual movement detail page.
+Only the minimum required fields are needed at upload time — movement name and video file. Optional metadata (alt names, tags, comments) can be filled in afterward on each movement's detail page.
 
 ---
 
-## Decisions Made
+## Options at a Glance
 
-| Decision | Choice | Reason |
+| | Option A: Web UI | Option B: Node.js CLI Script |
 |---|---|---|
-| UI vs CLI script | Web UI (in-browser) | Coaches don't have CLI access |
-| Name pre-fill | Auto-populate from filename, editable | Saves time; coaches just correct what's wrong |
-| Upload order | Sequential (one at a time) | Easier to track progress + errors per video |
-| Page placement | New page `bulk-upload.html` | Keeps single-upload flow clean |
+| **Where it runs** | Browser — any device, no setup | Terminal on a Mac or PC with Node.js installed |
+| **Best for** | Small batches, ongoing use by coaches | Large one-time migrations (50–500+ videos) |
+| **File limit** | ~25 per session (browser reliability) | Unlimited — resumable if it fails mid-run |
+| **Metadata** | Name typed per file in the browser | CSV spreadsheet prepared in advance |
+| **Requires dev** | Yes — new page to build | Yes — script to build |
+| **Tech comfort needed** | None — works like the existing upload page | Low — run one command in Terminal |
 
 ---
 
-## UI Design
+## Option A: Web UI (in-browser)
 
-### File Selection
-- Drag-and-drop zone (same styling as existing `upload.html`) + `<input type="file" multiple accept="video/*">`
-- After files are selected, render a queue table below the drop zone
+Coaches visit a new `bulk-upload.html` page in the app, select multiple video files at once (or drag and drop), confirm a movement name for each (auto-populated from the filename), and click **Upload All**. Videos upload one at a time with live progress per row.
 
-### Upload Queue (one row per file)
+### How it looks
 
 ```
-[ #  |  Filename          |  Movement Name        |  Status      ]
-[ 1  |  rdl.mp4           |  [Rdl            ]    |  Pending     ]
-[ 2  |  back-squat.mp4    |  [Back Squat      ]    |  Pending     ]
-[ 3  |  push-press.mp4    |  [Push Press      ]    |  Uploading 42% ]
+[ #  |  Filename           |  Movement Name         |  Status        ]
+[ 1  |  rdl.mp4            |  [Rdl             ]    |  Pending       ]
+[ 2  |  back-squat.mp4     |  [Back Squat       ]    |  Pending       ]
+[ 3  |  push-press.mp4     |  [Push Press       ]    |  Uploading 42% ]
+[ 4  |  lateral-raise.mp4  |  [Lateral Raise    ]    |  ✓ Done        ]
 ```
 
-- Movement name is auto-populated by stripping the file extension and replacing `-`/`_` with spaces, then title-cased (editable)
-- Duplicate name check fires on blur (same `ilike` check as single upload)
-- Status values: `Pending` → `Uploading X%` → `✓ Done` / `✗ Error — <message>`
-- A row that errors is marked in place; upload continues to the next video
+- Movement name is auto-filled from the filename (strips extension, fixes dashes/underscores, title-cases) — coaches just correct anything that looks wrong
+- A row that errors is marked in place; the rest of the queue continues
+- Summary banner at the end: `"4 uploaded successfully, 1 failed."`
+- **Soft cap of 25 files per session** with a warning if exceeded (see File Count Limits below)
 
-### Buttons
-- **Upload All** — disabled until ≥1 file is queued and all name fields are non-empty
-- **Clear** — removes pending rows (not ones already uploading/done)
+### Pros
+- No setup — works for any coach right in the browser
+- No CSV to prepare — names are auto-suggested
+- Fits naturally into the existing app
 
-### Completion
-- Summary banner when the last video finishes: e.g. `"3 uploaded successfully, 1 failed."`
+### Cons
+- ~25 file limit per session due to browser reliability
+- Cannot add tags, alt names, or comments during bulk upload (do it afterward per movement)
+- If the tab closes mid-upload, progress is lost for any remaining files
 
 ---
 
-## Implementation Plan
+## Option B: Node.js CLI Script
 
-### Files to Create
+A script run locally on the computer that holds the video files. It reads a `metadata.csv` spreadsheet and a folder of videos, uploads everything to R2 and Supabase in sequence, and prints a summary. Tom would be present during the run.
 
-#### `bulk-upload.html`
-- Same `<head>`, nav, and script loading pattern as `upload.html`
-- Nav links: `Catalog`, `Upload`, `Bulk Upload` (active class on Bulk Upload)
-- Multi-file drop zone `<div class="file-drop" id="file-drop">`
-- Queue table `<table id="upload-queue">`
-- Buttons: `<button id="upload-all-btn">` and `<button id="clear-btn">`
-- Summary banner `<div id="bulk-summary" class="hidden">`
-- Scripts: `config.js`, `auth.js`, `bulk-upload.js`
+### Folder layout
 
-#### `js/bulk-upload.js`
-- `requireAuth()` on load, `initNav()`
-- File input `change` handler → call `buildQueue(files)`
-- `buildQueue(files)` — for each file, append a row to `#upload-queue` with:
-  - Auto-name: `file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())`
-  - Per-row status cell, progress text, unique row ID
-- Duplicate name check on each name input's `blur` event (same `ilike` query pattern as `upload.js`)
-- `uploadAll()` — iterates queue rows in order, skips rows with empty names or already-done status:
-  1. Set row status → `Uploading`
-  2. `const urlResult = await callEdgeFunction('r2-upload-url', { filename })`
-  3. `await uploadToR2(file, urlResult.uploadUrl, pct => updateRowProgress(rowId, pct))`
-  4. Supabase insert: `{ name, video_path: filename, uploaded_by: session.user.id, alt_names: [], tags: [], comments: null }`
-  5. Set row status → `Done` or `Error`
-- `showSummary(succeeded, failed)` — reveals `#bulk-summary` with counts
-- Max file size check: 500 MB per file (same as single upload)
-
-### Files to Modify
-
-#### `upload.html`
-- Add `<a href="bulk-upload.html">Bulk Upload</a>` to `.nav-links`, after the Upload link
-
-#### `css/style.css`
-Add these classes:
-- `.bulk-queue` — full-width table with column widths: auto / 1fr / 2fr / 160px
-- `.bulk-row` — standard table row; row-level status modifier classes: `.is-uploading`, `.is-done`, `.is-error`
-- `.bulk-status` — status cell; color-coded via modifier classes
-- `.bulk-progress` — inline progress text within the status cell
-- `.bulk-summary` — banner at bottom of page (green on success, amber if any errors)
-- `.bulk-name-warning` — small warning text below each name input (duplicate check)
-
-#### `tests/desktop.spec.js`
-Add inside the `'Desktop layout (1280px)'` describe block:
-
-```js
-test('bulk upload: form visible, no horizontal scroll', async ({ page }) => {
-  await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
-  await page.goto('/bulk-upload.html');
-  await expect(page.locator('#file-drop')).toBeVisible({ timeout: 10000 });
-  await expect(page.locator('#upload-all-btn')).toBeVisible();
-  await noHorizontalScroll(page);
-});
+```
+/import/
+  metadata.csv
+  rdl.mp4
+  back-squat.mp4
+  push-press.mp4
+  ...
 ```
 
----
+### metadata.csv format
 
-## Task Checklist
+| Column | Required | Description |
+|---|---|---|
+| `filename` | Yes | Video file name including extension (e.g. `rdl.mp4`) |
+| `name` | Yes | Primary movement name (e.g. `Romanian Deadlift`) |
+| `alt_names` | No | Alternative names separated by `\|` (e.g. `RDL\|Stiff Leg Deadlift`) |
+| `tags` | No | Tags separated by `\|` — must match existing tags exactly, or new ones will be created |
+| `comments` | No | Coach notes shown on the movement detail page |
 
-- [ ] `bulk-upload.html` — new page
-- [ ] `js/bulk-upload.js` — upload logic
-- [ ] `css/style.css` — queue styles
-- [ ] `upload.html` — add Bulk Upload nav link
-- [ ] `tests/desktop.spec.js` — smoke test
+**Only `filename` and `name` are required.** Leave optional columns empty — they can be filled in later.
 
----
+```csv
+filename,name,alt_names,tags,comments
+rdl.mp4,Romanian Deadlift,RDL|Stiff Leg Deadlift,Hamstrings|Glutes,Keep back flat throughout
+back-squat.mp4,Back Squat,,Quadriceps|Glutes|Full Body,
+push-press.mp4,Push Press,Shoulder Press,Shoulders|Triceps,
+```
 
-## Key Code References
+The easiest way to build this file is in **Google Sheets** or **Excel**, then export as CSV.
 
-| What | Where |
-|---|---|
-| Auth helpers, `callEdgeFunction`, `uploadToR2` | `js/auth.js` |
-| Single upload flow to copy patterns from | `js/upload.js` |
-| Supabase `movements` insert shape | `js/upload.js` lines 121–131 |
-| Existing upload form structure to mirror | `upload.html` |
-| Existing CSS patterns | `css/style.css` |
-| Playwright test patterns | `tests/desktop.spec.js` |
+### How it runs
+
+```bash
+cd scripts
+node import.js --dir /path/to/import/folder
+```
+
+The script will:
+1. Read `metadata.csv` from the folder
+2. Create any missing tags in Supabase
+3. Upload each video to R2
+4. Insert each movement record into Supabase
+5. Print a summary of successes and any errors
+
+If something fails mid-run — fix the issue and re-run. The script skips videos whose names already exist in the database.
+
+### Pros
+- Handles unlimited videos — no session reliability concerns
+- Resumable — safe to re-run after failures
+- Supports all metadata fields upfront (tags, alt names, comments)
+- Runs headlessly — no browser tab to keep open
+
+### Cons
+- Requires Node.js installed on the computer with the videos
+- Requires preparing a CSV spreadsheet in advance
+- Tom needs to be present (or credentials need to be shared carefully)
+- CLI script needs to be built first
+
+### Portability note
+
+If the script needs to run on someone else's computer, the simplest approach is to hardcode the credentials directly in the script before handing it over (not committed to the repo, deleted after use). Credentials needed: R2 Access Key ID + Secret, R2 bucket name + endpoint, Supabase URL + service role key (all in 1Password).
 
 ---
 
 ## File Count Limits
 
-The browser, R2, and Supabase impose no hard limits on file count. The constraint is **time and session reliability**:
+The browser, R2, and Supabase impose no hard limits on file count. The real constraint for Option A is **time and browser session reliability**:
 
 | Avg video size | Upload speed | Time per video | 25 videos | 500 videos |
 |---|---|---|---|---|
 | 50 MB | 10 Mbps | ~40 sec | ~17 min | ~5.5 hours |
 | 100 MB | 10 Mbps | ~80 sec | ~33 min | ~11 hours |
 
-A browser session open for several hours is vulnerable to: computer sleep, network drops, tab crash, or a single stalled upload. There is no resume capability in the web UI.
+A browser tab open for several hours is vulnerable to: computer sleep, network drops, or a tab crash. There is no resume capability in the web UI. Option B (CLI script) does not have this constraint.
 
-**Recommendation:** Soft-cap the web UI at **25 files per session** with a visible warning when the user exceeds it. For migrations of 50+ videos, direct coaches to the Node.js CLI script documented in `bulk-upload.md` (root), which is resumable and runs headlessly.
-
-The soft cap should be a named constant in `bulk-upload.js` (e.g. `const MAX_FILES = 25`) so it's easy to adjust after evaluation.
+**Recommendation:** Option A with a soft cap of 25 files per session for regular use; Option B for any migration of 50+ videos.
 
 ---
 
-## Open Questions
+## Questions for Coaches
 
-- [ ] Should the bulk upload page be accessible to all coaches, or admins only?
-- [ ] Confirm the soft file cap — 25 feels right for a web session but needs sign-off
-- [ ] Should failed rows be re-tryable individually without re-uploading successful ones?
+These need answers before building:
+
+- [ ] **How many videos do you typically need to upload at once?** (handful at a time vs. large one-time migration)
+- [ ] **Do you have metadata (names, tags) ready before uploading, or do you figure it out as you go?** This affects whether a CSV is practical
+- [ ] **Is this a one-time migration of existing videos, ongoing periodic uploads, or both?**
+- [ ] **Are the videos already organized on a Mac/PC, or scattered across devices?**
+- [ ] **Are coaches comfortable opening a Terminal and running one command, or should everything stay in the browser?**
+- [ ] **Should bulk upload be available to all coaches, or admins only?**
+
+---
+
+## Dev Implementation Notes
+
+*For the dev picking this up after coach feedback.*
+
+### If Option A is chosen — files to create/modify
+
+- **Create** `bulk-upload.html` — same nav/head as `upload.html`; multi-file drop zone (`#file-drop`), queue table (`#upload-queue`), `#upload-all-btn`, `#clear-btn`, `#bulk-summary`
+- **Create** `js/bulk-upload.js` — `requireAuth()`, file→queue builder with auto-name (`file.name.replace(/\.[^.]+$/, '').replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase())`), sequential `uploadAll()` loop using existing `callEdgeFunction('r2-upload-url')` + `uploadToR2()` + Supabase insert; `MAX_FILES = 25` constant
+- **Modify** `upload.html` — add `<a href="bulk-upload.html">Bulk Upload</a>` to `.nav-links`
+- **Modify** `css/style.css` — add `.bulk-queue`, `.bulk-row`, `.bulk-status` (variants: `.is-uploading`, `.is-done`, `.is-error`), `.bulk-summary`
+- **Modify** `tests/desktop.spec.js` — smoke test: navigate to `/bulk-upload.html`, expect `#file-drop` and `#upload-all-btn` visible, no horizontal scroll
+
+Key code references: auth helpers + `uploadToR2` in `js/auth.js`; single upload pattern in `js/upload.js` (Supabase insert at lines 121–131).
+
+### If Option B is chosen — files to create
+
+- **Create** `scripts/import.js` — reads `metadata.csv`, creates missing tags in Supabase, uploads each video to R2 via AWS SDK (`@aws-sdk/client-s3`), inserts movement records; skips names that already exist; prints pass/fail summary
+- Credentials hardcoded per run (not committed); deleted after use

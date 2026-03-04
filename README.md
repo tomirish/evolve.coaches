@@ -49,3 +49,8 @@ npm run test:ui   # headed / interactive
 ```
 
 Tests run against a local Python HTTP server with real Supabase credentials injected via 1Password CLI. CI runs the same suite on every push to `develop` and auto-merges to `main` on pass.
+
+### Git workflow
+- **All work goes to `develop`** — never commit or push directly to `main`
+- CI runs the Playwright test suite on every push to `develop`
+- `main` is updated automatically by CI after all tests pass

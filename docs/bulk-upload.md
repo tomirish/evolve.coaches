@@ -15,7 +15,10 @@ The initial migration is expected to be a one-time event. After that, ongoing up
 
 ## Vision OCR — Auto-Detecting Movement Names
 
-Many of the videos have the movement name as a text overlay in the first frame (e.g. "THE EVOLVE FLOW" in the bottom-left corner). Rather than requiring coaches to type names or prepare a spreadsheet, both upload options can use **Claude Vision** to read the name directly from the video.
+Many of the videos have the movement name as a text overlay in the first frame — visible right at 0:00. Rather than requiring coaches to type names or prepare a spreadsheet, both upload options can use **Claude Vision** to read the name directly from the video.
+
+![Example video frame showing movement name overlay](images/vision-ocr-example.png)
+*"THE EVOLVE FLOW" — bottom-left text overlay, visible from frame 0. Claude Vision reads this and pre-fills the movement name.*
 
 ### How it works
 

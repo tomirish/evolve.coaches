@@ -104,21 +104,33 @@ A script run locally on the computer that holds the video files. It uses ffmpeg 
 
 ### How it runs
 
+**Step 1 — Open Terminal and run the script:**
 ```bash
-cd scripts
-node import.js --dir /path/to/import/folder
+node /path/to/scripts/import.js
 ```
 
-The script will:
-1. Extract frame 0 from each video using ffmpeg
-2. Call Claude Vision to read the movement name
-3. If `metadata.csv` exists, use CSV values where provided (Vision as fallback for missing names)
-4. Create any new tags in Supabase
-5. Upload each video to R2
-6. Insert each movement record into Supabase
-7. Print a pass/fail summary
+**Step 2 — It will ask: "Where is your video folder?"**
+Drag your folder from Finder onto the Terminal window and press Enter. The path will fill in automatically.
 
-If something fails mid-run — fix the issue and re-run. The script skips videos whose names already exist in the database.
+**Step 3 — It will ask: "What is your email?"**
+Type your Evolve Coaches login email and press Enter.
+
+**Step 4 — It will ask: "What is your password?"**
+Type your password and press Enter. (It won't show as you type — that's normal.)
+
+**Step 5 — Watch it go.**
+The script reads each video, figures out the movement name, and uploads. It prints a line for each video:
+```
+✓  Romanian Deadlift
+✓  Back Squat
+⚠  evolve-flow.mp4 — couldn't read name, skipped (add manually)
+✓  Push Press
+```
+
+**Step 6 — Done.**
+It prints a summary: `"47 uploaded, 2 skipped."` Any skipped videos can be uploaded one at a time through the normal upload page.
+
+If anything goes wrong mid-run — just run it again. It skips videos that already made it in.
 
 ### Optional metadata.csv
 

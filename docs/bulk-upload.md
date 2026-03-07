@@ -11,6 +11,10 @@ The existing `upload.html` handles one video at a time. Coaches need a way to up
 
 The initial migration is expected to be a one-time event. After that, ongoing uploads will likely use the existing single-upload page. The bulk tools exist to solve that first migration and any occasional batch needs.
 
+**Key people:**
+- **Jaclyn** — owner, likely has most of the videos
+- **Julie** — coach, originated this feature request and is the primary feedback source
+
 ---
 
 ## Vision OCR — Auto-Detecting Movement Names
@@ -182,10 +186,11 @@ A browser tab open for several hours is vulnerable to computer sleep, network dr
 
 These need answers before building:
 
-- [ ] **How many videos do you need to upload for the initial migration?** (dozens vs. hundreds)
+- [ ] **Who has the videos — Jaclyn, Julie, or both?** And are they on one device or spread across multiple?
+- [ ] **How many videos are we talking?** (dozens vs. hundreds)
 - [ ] **Is this a one-time migration, or will you need to batch-upload periodically after that?**
-- [ ] **Are the videos already organized in one folder on a Mac/PC, or scattered across devices?**
-- [ ] **Are you comfortable opening Terminal and running one command**, or would you prefer everything stays in the browser? *(No wrong answer — just helps us build the right tool)*
+- [ ] **For the initial migration — would you want to run it yourself, or have Tom handle it and videos just appear in the app?** *(No wrong answer)*
+- [ ] **If running it yourself — are you comfortable opening Terminal and running one command**, or would you prefer everything stays in the browser?
 - [ ] **Do you want to add tags, alt names, and comments at upload time**, or is it fine to fill those in afterward per video?
 - [ ] **Should bulk upload be available to all coaches, or admins only?**
 

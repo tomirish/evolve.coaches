@@ -48,9 +48,10 @@ npm test          # headless
 npm run test:ui   # headed / interactive
 ```
 
-Tests run against a local Python HTTP server with real Supabase credentials injected via 1Password CLI. CI runs the same suite on every push to `develop` and auto-merges to `main` on pass.
+Tests run against a local Python HTTP server with real Supabase credentials injected via 1Password CLI. Local runs are optional — CI is the safety net. Run locally before pushing only for significant changes (auth, nav, anything that affects every page).
 
 ### Git workflow
 - **All work goes to `develop`** — never commit or push directly to `main`
-- CI runs the Playwright test suite on every push to `develop`
-- `main` is updated automatically by CI after all tests pass
+- CI runs the Playwright test suite on every push to `develop` (doc-only pushes skip CI)
+- `main` is protected — only the CI pipeline can push to it, and only after all tests pass
+- `main` is updated automatically once the test run completes successfully

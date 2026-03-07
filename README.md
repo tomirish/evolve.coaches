@@ -52,6 +52,6 @@ Tests run against a local Python HTTP server with real Supabase credentials inje
 
 ### Git workflow
 - **All work goes to `develop`** — never commit or push directly to `main`
-- CI runs the Playwright test suite on every push to `develop` (doc-only pushes skip CI)
+- CI runs the Playwright test suite on every push to `develop`
 - `main` is protected — only the CI pipeline can push to it, and only after all tests pass
 - `main` is updated automatically once the test run completes successfully

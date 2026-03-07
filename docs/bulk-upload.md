@@ -109,11 +109,27 @@ A script run locally on the computer that holds the video files. It uses ffmpeg 
   ...
 ```
 
+### Setup (one time, Mac only)
+
+Paste this into Terminal and press Enter. It installs everything needed and downloads the script automatically:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tomirish/evolve.coaches/main/scripts/setup.sh | bash
+```
+
+The setup script will:
+1. Check for Node.js — install it if missing
+2. Check for ffmpeg — install it if missing
+3. Download the import script
+4. Install dependencies
+
+This only needs to be done once. After that, just run the import script directly.
+
 ### How it runs
 
 **Step 1 — Open Terminal and run the script:**
 ```bash
-node /path/to/scripts/import.js
+node ~/evolve-import/import.js
 ```
 
 **Step 2 — It will ask: "Where is your video folder?"**

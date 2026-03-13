@@ -1,5 +1,9 @@
 const contentEl = document.getElementById('content');
 
+// If a link token is being processed, this timer fires after 8 seconds if
+// no auth event arrives — which means the token expired or was already used.
+let expiredTimer = null;
+
 // ── Auth state listener ───────────────────────────────────────
 // PASSWORD_RECOVERY  — password reset link (replayed to late listeners ✓)
 // SIGNED_IN          — invite link fires this, but may arrive before this
@@ -9,8 +13,10 @@ const contentEl = document.getElementById('content');
 //                      user arrived via an email link, so show password form.
 client.auth.onAuthStateChange((event, session) => {
   if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
+    clearTimeout(expiredTimer);
     showNewPasswordForm();
   } else if (event === 'INITIAL_SESSION' && session) {
+    clearTimeout(expiredTimer);
     showNewPasswordForm();
   }
 });
@@ -21,8 +27,23 @@ client.auth.onAuthStateChange((event, session) => {
 // If no hash, the coach clicked "Forgot password?" — show the email form.
 if (window.location.hash) {
   contentEl.innerHTML = '<p class="status-msg">Loading…</p>';
+
+  // If no auth event fires within 8 seconds the token likely expired.
+  // Show a clear message so the user isn't left staring at a spinner.
+  expiredTimer = setTimeout(showExpiredMessage, 8000);
 } else {
   showEmailForm();
+}
+
+// ── Expired link message ──────────────────────────────────────
+function showExpiredMessage() {
+  contentEl.innerHTML = `
+    <p class="brand-sub">Your link has expired or is no longer valid.</p>
+    <p class="brand-sub">Request a new one below and you'll be set in seconds.</p>
+    <button class="btn btn-primary" id="request-new-link-btn" style="width:100%;margin-top:0.5rem">Request a New Link</button>
+    <p class="auth-back"><a href="index.html">← Back to sign in</a></p>
+  `;
+  document.getElementById('request-new-link-btn').addEventListener('click', showEmailForm);
 }
 
 // ── Email request form ────────────────────────────────────────

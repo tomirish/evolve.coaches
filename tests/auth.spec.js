@@ -47,3 +47,33 @@ test('already logged in visiting index.html redirects to catalog.html', async ({
   await page.waitForURL('**/catalog.html', { timeout: 10000 });
   await expect(page).toHaveURL(/catalog\.html/);
 });
+
+// ── reset.html — no hash (Forgot Password flow) ───────────────────────────────
+
+test('reset.html with no hash shows the email request form', async ({ page }) => {
+  await page.goto('/reset.html');
+  await expect(page.locator('#reset-form')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('#email')).toBeVisible();
+  await expect(page.locator('#reset-btn')).toBeVisible();
+});
+
+// ── reset.html — expired / invalid token ─────────────────────────────────────
+// Simulates what coaches hit: an invite link that expired overnight.
+// A fake hash causes Supabase to fail silently — no auth event fires —
+// so the 8-second fallback kicks in and shows the expired-link message.
+
+test('reset.html with invalid hash shows expired-link message after timeout', async ({ page }) => {
+  test.setTimeout(20000);
+  await page.goto('/reset.html#access_token=invalid_token_simulating_expiry&type=invite');
+  await expect(page.locator('text=Your link has expired')).toBeVisible({ timeout: 15000 });
+  await expect(page.locator('#request-new-link-btn')).toBeVisible();
+});
+
+test('expired-link "Request a New Link" button shows email form', async ({ page }) => {
+  test.setTimeout(20000);
+  await page.goto('/reset.html#access_token=invalid_token_simulating_expiry&type=invite');
+  await page.locator('#request-new-link-btn').waitFor({ timeout: 15000 });
+  await page.click('#request-new-link-btn');
+  await expect(page.locator('#reset-form')).toBeVisible({ timeout: 5000 });
+  await expect(page.locator('#email')).toBeVisible();
+});

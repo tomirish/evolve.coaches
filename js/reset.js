@@ -22,10 +22,14 @@ client.auth.onAuthStateChange((event, session) => {
 });
 
 // ── Init ─────────────────────────────────────────────────────
-// If there's a hash, Supabase is processing a token — show loading and
-// wait for the auth event above.
+// If the hash contains an error (e.g. otp_expired), Supabase already rejected
+// the token — show the expired message immediately, no auth event will fire.
+// If there's a valid-looking hash, show loading and wait for the auth event.
 // If no hash, the coach clicked "Forgot password?" — show the email form.
-if (window.location.hash) {
+const hashParams = new URLSearchParams(window.location.hash.slice(1));
+if (hashParams.get('error')) {
+  showExpiredMessage();
+} else if (window.location.hash) {
   contentEl.innerHTML = '<p class="status-msg">Loading…</p>';
 
   // If no auth event fires within 8 seconds the token likely expired.

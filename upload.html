@@ -36,6 +36,7 @@
         <div class="file-drop" id="file-drop">
           <input type="file" id="video-file" accept="video/*" required>
           <p id="file-label">Tap to select a video</p>
+          <p id="file-ai-hint" style="font-size:0.8rem;margin-top:0.375rem;">AI will suggest a name once you select a video.</p>
         </div>
       </div>
 
@@ -43,7 +44,7 @@
         <label for="name">Movement Name <span class="required">*</span></label>
         <input type="text" id="name" placeholder="e.g. Barbell Back Squat" required>
         <div id="name-warning" class="warning hidden"></div>
-        <p id="name-ocr-hint" class="field-hint">AI will suggest a name once you select a video.</p>
+        <p id="name-ocr-hint" class="field-hint hidden"></p>
       </div>
 
       <div class="field">

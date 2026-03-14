@@ -12,16 +12,15 @@ const pillGroup    = document.getElementById('pill-group');
 const nameInput    = document.getElementById('name');
 const nameWarning  = document.getElementById('name-warning');
 const nameOcrHint  = document.getElementById('name-ocr-hint');
+const fileAiHint   = document.getElementById('file-ai-hint');
 
 // Track whether the current name value was set by OCR (so a new video can replace it)
 let ocrFilledName = false;
 
-const OCR_HINT_DEFAULT = 'AI will suggest a name once you select a video.';
-
 // ── Clear OCR hint when coach types in the name field ────────
 nameInput.addEventListener('input', () => {
   ocrFilledName = false;
-  nameOcrHint.textContent = OCR_HINT_DEFAULT;
+  nameOcrHint.classList.add('hidden');
 });
 
 // ── Duplicate name check ──────────────────────────────────────
@@ -76,6 +75,7 @@ fileInput.addEventListener('change', () => {
   }
   errorMsg.classList.add('hidden');
   fileLabel.textContent = file.name;
+  fileAiHint.classList.add('hidden');
   suggestMovementName(file);
 });
 
@@ -156,13 +156,14 @@ form.addEventListener('submit', async (e) => {
 // ── Vision OCR ───────────────────────────────────────────────
 async function suggestMovementName(file) {
   nameOcrHint.textContent = 'Detecting movement name…';
+  nameOcrHint.classList.remove('hidden');
 
   try {
     const base64 = await extractVideoFrame(file);
     const result = await callEdgeFunction('vision-name', { image: base64 });
 
     if (result.error || !result.name) {
-      nameOcrHint.textContent = OCR_HINT_DEFAULT;
+      nameOcrHint.classList.add('hidden');
       return;
     }
 
@@ -172,10 +173,10 @@ async function suggestMovementName(file) {
       ocrFilledName = true;
       nameOcrHint.textContent = 'Name suggested by AI — confirm or edit.';
     } else {
-      nameOcrHint.textContent = OCR_HINT_DEFAULT;
+      nameOcrHint.classList.add('hidden');
     }
   } catch {
-    nameOcrHint.textContent = OCR_HINT_DEFAULT;
+    nameOcrHint.classList.add('hidden');
   }
 }
 

@@ -16,10 +16,12 @@ const nameOcrHint  = document.getElementById('name-ocr-hint');
 // Track whether the current name value was set by OCR (so a new video can replace it)
 let ocrFilledName = false;
 
+const OCR_HINT_DEFAULT = 'AI will suggest a name once you select a video.';
+
 // ── Clear OCR hint when coach types in the name field ────────
 nameInput.addEventListener('input', () => {
   ocrFilledName = false;
-  nameOcrHint.classList.add('hidden');
+  nameOcrHint.textContent = OCR_HINT_DEFAULT;
 });
 
 // ── Duplicate name check ──────────────────────────────────────
@@ -154,14 +156,13 @@ form.addEventListener('submit', async (e) => {
 // ── Vision OCR ───────────────────────────────────────────────
 async function suggestMovementName(file) {
   nameOcrHint.textContent = 'Detecting movement name…';
-  nameOcrHint.classList.remove('hidden');
 
   try {
     const base64 = await extractVideoFrame(file);
     const result = await callEdgeFunction('vision-name', { image: base64 });
 
     if (result.error || !result.name) {
-      nameOcrHint.classList.add('hidden');
+      nameOcrHint.textContent = OCR_HINT_DEFAULT;
       return;
     }
 
@@ -171,10 +172,10 @@ async function suggestMovementName(file) {
       ocrFilledName = true;
       nameOcrHint.textContent = 'Name suggested by AI — confirm or edit.';
     } else {
-      nameOcrHint.classList.add('hidden');
+      nameOcrHint.textContent = OCR_HINT_DEFAULT;
     }
   } catch {
-    nameOcrHint.classList.add('hidden');
+    nameOcrHint.textContent = OCR_HINT_DEFAULT;
   }
 }
 

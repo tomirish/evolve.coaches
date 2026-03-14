@@ -11,6 +11,16 @@ const progressText = document.getElementById('progress-text');
 const pillGroup    = document.getElementById('pill-group');
 const nameInput    = document.getElementById('name');
 const nameWarning  = document.getElementById('name-warning');
+const nameOcrHint  = document.getElementById('name-ocr-hint');
+
+// Track whether the current name value was set by OCR (so a new video can replace it)
+let ocrFilledName = false;
+
+// ── Clear OCR hint when coach types in the name field ────────
+nameInput.addEventListener('input', () => {
+  ocrFilledName = false;
+  nameOcrHint.classList.add('hidden');
+});
 
 // ── Duplicate name check ──────────────────────────────────────
 nameInput.addEventListener('blur', async () => {
@@ -64,6 +74,7 @@ fileInput.addEventListener('change', () => {
   }
   errorMsg.classList.add('hidden');
   fileLabel.textContent = file.name;
+  suggestMovementName(file);
 });
 
 // ── Submit ────────────────────────────────────────────────────
@@ -139,6 +150,76 @@ form.addEventListener('submit', async (e) => {
 
   window.location.href = 'catalog.html';
 });
+
+// ── Vision OCR ───────────────────────────────────────────────
+async function suggestMovementName(file) {
+  nameOcrHint.textContent = 'Detecting movement name…';
+  nameOcrHint.classList.remove('hidden');
+
+  try {
+    const base64 = await extractVideoFrame(file);
+    const result = await callEdgeFunction('vision-name', { image: base64 });
+
+    if (result.error || !result.name) {
+      nameOcrHint.classList.add('hidden');
+      return;
+    }
+
+    // Pre-fill only if coach hasn't typed anything, or if current value was also AI-suggested
+    if (!nameInput.value.trim() || ocrFilledName) {
+      nameInput.value = result.name;
+      ocrFilledName = true;
+      nameOcrHint.textContent = 'Name suggested by AI — confirm or edit.';
+    } else {
+      nameOcrHint.classList.add('hidden');
+    }
+  } catch {
+    nameOcrHint.classList.add('hidden');
+  }
+}
+
+function extractVideoFrame(file) {
+  return new Promise((resolve, reject) => {
+    const video  = document.createElement('video');
+    const canvas = document.createElement('canvas');
+    const ctx    = canvas.getContext('2d');
+    const url    = URL.createObjectURL(file);
+    let   sought = false;
+
+    const cleanup = () => URL.revokeObjectURL(url);
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('Timed out')); }, 10000);
+
+    const trySeek = () => {
+      if (sought || !video.videoWidth || !video.videoHeight) return;
+      sought = true;
+      video.currentTime = Math.min(1, video.duration * 0.1);
+    };
+
+    video.addEventListener('seeked', () => {
+      clearTimeout(timeout);
+      const maxW    = 800;
+      const scale   = Math.min(1, maxW / video.videoWidth);
+      canvas.width  = Math.round(video.videoWidth  * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      cleanup();
+      resolve(canvas.toDataURL('image/jpeg', 0.85).split(',')[1]);
+    });
+
+    video.addEventListener('loadedmetadata', trySeek);
+    video.addEventListener('loadeddata',     trySeek);
+
+    video.addEventListener('error', () => {
+      clearTimeout(timeout);
+      cleanup();
+      reject(new Error('Video could not be decoded'));
+    });
+
+    video.muted   = true;
+    video.preload = 'auto';
+    video.src     = url;
+  });
+}
 
 // ── Helpers ───────────────────────────────────────────────────
 function showError(msg) {

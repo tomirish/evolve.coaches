@@ -28,6 +28,16 @@ async function mockVisionName(page, name) {
   });
 }
 
+// Patch extractVideoFrameWithDataUrl so tests skip real video decoding.
+async function mockFrameExtraction(page) {
+  await page.evaluate(() => {
+    window.extractVideoFrameWithDataUrl = () => Promise.resolve({
+      base64: 'fake-base64',
+      dataUrl: 'data:image/jpeg;base64,fake',
+    });
+  });
+}
+
 // A fake video file — enough to trigger the change handler without real decoding.
 const FAKE_VIDEO = {
   name: 'test.mp4',
@@ -43,17 +53,20 @@ test.describe('Upload page', () => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
 
+    // Select a single file to reveal the single-mode form
+    await page.setInputFiles('#video-file', FAKE_VIDEO);
+
     const videoY = await page.locator('#video-file').evaluate(el => el.getBoundingClientRect().top);
     const nameY  = await page.locator('#name').evaluate(el => el.getBoundingClientRect().top);
     expect(videoY, 'Video field should be above the name field').toBeLessThan(nameY);
   });
 
-  test('AI hint is visible inside video box before file is selected', async ({ page }) => {
+  test('drop zone hint is visible before file is selected', async ({ page }) => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
 
     await expect(page.locator('#file-ai-hint')).toBeVisible();
-    await expect(page.locator('#file-ai-hint')).toContainText('AI will suggest a name');
+    await expect(page.locator('#file-ai-hint')).toContainText('AI will suggest');
   });
 
   // ── File selection ────────────────────────────────────────────────────────
@@ -75,11 +88,8 @@ test.describe('Upload page', () => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
 
-    // Patch window.extractVideoFrame so the test skips real video decoding.
-    // Since upload.js is a non-module script, top-level functions are on window.
-    await page.evaluate(() => {
-      window.extractVideoFrame = () => Promise.resolve('fake-base64');
-    });
+    // Patch extractVideoFrameWithDataUrl so the test skips real video decoding.
+    await mockFrameExtraction(page);
 
     await page.setInputFiles('#video-file', FAKE_VIDEO);
 
@@ -93,9 +103,7 @@ test.describe('Upload page', () => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
 
-    await page.evaluate(() => {
-      window.extractVideoFrame = () => Promise.resolve('fake-base64');
-    });
+    await mockFrameExtraction(page);
 
     // First video
     await page.setInputFiles('#video-file', FAKE_VIDEO);
@@ -111,9 +119,7 @@ test.describe('Upload page', () => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
 
-    await page.evaluate(() => {
-      window.extractVideoFrame = () => Promise.resolve('fake-base64');
-    });
+    await mockFrameExtraction(page);
 
     await page.setInputFiles('#video-file', FAKE_VIDEO);
     await expect(page.locator('#name')).toHaveValue('Barbell Back Squat', { timeout: 5000 });
@@ -123,24 +129,24 @@ test.describe('Upload page', () => {
     await expect(page.locator('#name-ocr-hint')).toBeHidden();
   });
 
-  test('AI does not overwrite a manually typed name', async ({ page }) => {
+  test('AI does not overwrite a manually edited name', async ({ page }) => {
     await mockVisionName(page, 'Barbell Back Squat');
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
 
-    await page.evaluate(() => {
-      window.extractVideoFrame = () => Promise.resolve('fake-base64');
-    });
+    await mockFrameExtraction(page);
 
-    // Coach types a name first
+    // Select first video — OCR fills the name
+    await page.setInputFiles('#video-file', FAKE_VIDEO);
+    await expect(page.locator('#name')).toHaveValue('Barbell Back Squat', { timeout: 5000 });
+
+    // Coach edits the name manually
     await page.fill('#name', 'My Custom Movement');
 
-    await page.setInputFiles('#video-file', FAKE_VIDEO);
-
-    // Wait a moment for OCR to complete
+    // Select a second video — OCR should not overwrite the manually edited name
+    await page.setInputFiles('#video-file', { ...FAKE_VIDEO, name: 'test2.mp4' });
     await page.waitForTimeout(1000);
 
-    // AI should not have overwritten the manually typed name
     await expect(page.locator('#name')).toHaveValue('My Custom Movement');
   });
 

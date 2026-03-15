@@ -95,7 +95,13 @@ Deno.serve(async (req) => {
     }
 
     const result = await response.json()
-    const name = result.content?.[0]?.text?.trim() ?? ''
+    const raw  = result.content?.[0]?.text?.trim() ?? ''
+    // Reject anything that looks like an explanation rather than a movement name
+    // (more than 5 words = the model is describing what it sees, not naming the movement)
+    const wordCount = raw.split(/\s+/).filter(Boolean).length
+    const name = wordCount <= 5
+      ? raw.toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase())
+      : ''
 
     return new Response(JSON.stringify({ name }), {
       headers: { ...corsHeaders(req), 'Content-Type': 'application/json' },

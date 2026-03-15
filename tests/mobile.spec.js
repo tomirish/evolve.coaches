@@ -60,6 +60,8 @@ test.describe('Mobile layout (390px)', () => {
   test('upload: form fields visible, no horizontal scroll', async ({ page }) => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
+    // Single-mode form is hidden until a file is selected
+    await page.setInputFiles('#video-file', { name: 'test.mp4', mimeType: 'video/mp4', buffer: Buffer.from('fake') });
     await expect(page.locator('#name')).toBeVisible({ timeout: 10000 });
     await expect(page.locator('#submit-btn')).toBeVisible();
     await noHorizontalScroll(page);

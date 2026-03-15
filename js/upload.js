@@ -41,6 +41,27 @@ const MAX_FILE_SIZE = 500 * 1024 * 1024;
 let queue     = [];
 let uploading = false;
 
+// ── OCR concurrency limiter ───────────────────────────────────────────────────
+const OCR_CONCURRENCY = 4;
+let ocrInFlight = 0;
+const ocrPending = [];
+
+function scheduleOcr(item) {
+  ocrPending.push(item);
+  drainOcrQueue();
+}
+
+function drainOcrQueue() {
+  while (ocrInFlight < OCR_CONCURRENCY && ocrPending.length > 0) {
+    const next = ocrPending.shift();
+    ocrInFlight++;
+    runBulkOcr(next).finally(() => {
+      ocrInFlight--;
+      drainOcrQueue();
+    });
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // VIDEO PREVIEW MODAL
 // ─────────────────────────────────────────────────────────────────────────────
@@ -52,6 +73,7 @@ function openVideoModal(file) {
   modalObjectUrl = URL.createObjectURL(file);
   const video = document.getElementById('modal-video');
   video.src = modalObjectUrl;
+  video.muted = true;
   video.play();
   const modal = document.getElementById('video-modal');
   modal.classList.remove('hidden');
@@ -293,7 +315,7 @@ function addFilesToQueue(files) {
     const item = { id: crypto.randomUUID(), file, name: '', tags: [], status: 'detecting', progress: 0, errorMsg: '' };
     queue.push(item);
     appendBulkRow(item);
-    runBulkOcr(item);
+    scheduleOcr(item);
   }
   syncBulkUI();
 }
@@ -402,9 +424,10 @@ function removeBulkItem(id) {
   if (row) row.remove();
   if (queue.length === 0) {
     bulkMode.classList.add('hidden');
-    singleMode.classList.remove('hidden');
+    singleMode.classList.add('hidden');
+    fileDropEl.classList.remove('compact');
     mainPage.classList.remove('page-wide');
-    fileLabel.textContent = 'Tap to select a video — or drag here';
+    fileLabel.textContent = 'Tap to select videos — or drag here';
     fileAiHint.classList.remove('hidden');
     currentMode = 'single';
   }

@@ -1,8 +1,19 @@
 const { test, expect } = require('@playwright/test');
 const { loginAs } = require('./helpers/login');
+const { setupMovementFixture, teardownMovementFixture } = require('./helpers/fixtures');
 
 const COACH_EMAIL    = process.env.COACH_EMAIL;
 const COACH_PASSWORD = process.env.COACH_PASSWORD;
+
+let fixture;
+
+test.beforeAll(async () => {
+  fixture = await setupMovementFixture(COACH_EMAIL, COACH_PASSWORD);
+});
+
+test.afterAll(async () => {
+  await teardownMovementFixture(fixture?.client, fixture?.id);
+});
 
 test.beforeEach(async ({ page }) => {
   await loginAs(page, COACH_EMAIL, COACH_PASSWORD);

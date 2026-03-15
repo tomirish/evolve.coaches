@@ -256,31 +256,6 @@ body {
   position: relative;
 }
 
-.nav-user-btn {
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.75);
-  font-size: 0.9rem;
-  font-weight: 500;
-  font-family: inherit;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0;
-  transition: color 0.15s;
-}
-
-.nav-user-btn:hover {
-  color: var(--white);
-}
-
-.nav-caret {
-  font-size: 0.7rem;
-  opacity: 0.8;
-  margin-top: 1px;
-}
-
 .nav-user-menu {
   position: absolute;
   right: 0;

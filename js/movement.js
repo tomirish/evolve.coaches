@@ -30,8 +30,10 @@ async function load() {
   let signedUrl  = null;
 
   if (cached) {
-    const { url, expires } = JSON.parse(cached);
-    if (Date.now() < expires) signedUrl = url;
+    try {
+      const { url, expires } = JSON.parse(cached);
+      if (Date.now() < expires) signedUrl = url;
+    } catch {}
   }
 
   const [signedResult, uploaderResult] = await Promise.all([

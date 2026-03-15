@@ -21,12 +21,16 @@ A private video library for coaches at [Evolve Strong Fitness](https://evolvestr
 
 ## Features
 - Secure login with password reset (coaches only)
-- Upload videos with movement name, alternative names, tags, and comments
+- **Single upload** — video + metadata with AI-suggested movement name (Claude Haiku Vision OCR from video frame)
+- **Bulk upload** — drop up to 48+ videos at once; AI names each automatically with 4-concurrent OCR jobs, video thumbnails with click-to-play preview
 - Browse movements with search, tag filters, and A–Z / Z–A / Recent sort — alternative names appear as their own catalog cards
 - Watch videos and edit metadata inline; replace a video file without losing metadata
 - Signed video URLs via Cloudflare R2 with session caching for fast repeat loads
 - Tags page (all coaches) — add and rename tags used across the catalog
-- Admin page — invite and manage users, delete tags with usage counts
+- Admin page — invite and manage users, manage tags, browse all videos with thumbnails
+  - **Duplicate detection** — toggle to group movements sharing a name for easy review
+  - **Soft delete / archive** — movements are hidden not destroyed; restore any time via SQL
+  - **Bulk archive** — checkbox rows and archive in one action
 - Mobile-responsive design
 
 ## Development

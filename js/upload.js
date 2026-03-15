@@ -685,12 +685,22 @@ function extractVideoFrame(file) {
     let sought   = false;
 
     const cleanup = () => URL.revokeObjectURL(url);
-    const timeout = setTimeout(() => { cleanup(); reject(new Error('Timed out')); }, 10000);
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('Timed out')); }, 20000);
+
+    const doSeek = () => {
+      video.currentTime = Math.min(1, (video.duration || 0) * 0.1);
+    };
 
     const trySeek = () => {
       if (sought || !video.videoWidth || !video.videoHeight) return;
       sought = true;
-      video.currentTime = Math.min(1, video.duration * 0.1);
+      // iOS Safari requires play() before seeking a local file
+      const p = video.play();
+      if (p !== undefined) {
+        p.then(() => { video.pause(); doSeek(); }).catch(() => doSeek());
+      } else {
+        doSeek();
+      }
     };
 
     video.addEventListener('seeked', () => {
@@ -706,10 +716,12 @@ function extractVideoFrame(file) {
 
     video.addEventListener('loadedmetadata', trySeek);
     video.addEventListener('loadeddata',     trySeek);
+    video.addEventListener('canplay',        trySeek);
     video.addEventListener('error', () => { clearTimeout(timeout); cleanup(); reject(new Error('Decode error')); });
-    video.muted   = true;
-    video.preload = 'auto';
-    video.src     = url;
+    video.muted       = true;
+    video.playsInline = true;
+    video.preload     = 'auto';
+    video.src         = url;
   });
 }
 
@@ -723,12 +735,22 @@ function extractVideoFrameWithDataUrl(file) {
     let sought   = false;
 
     const cleanup = () => URL.revokeObjectURL(url);
-    const timeout = setTimeout(() => { cleanup(); reject(new Error('Timed out')); }, 10000);
+    const timeout = setTimeout(() => { cleanup(); reject(new Error('Timed out')); }, 20000);
+
+    const doSeek = () => {
+      video.currentTime = Math.min(1, (video.duration || 0) * 0.1);
+    };
 
     const trySeek = () => {
       if (sought || !video.videoWidth || !video.videoHeight) return;
       sought = true;
-      video.currentTime = Math.min(1, video.duration * 0.1);
+      // iOS Safari requires play() before seeking a local file
+      const p = video.play();
+      if (p !== undefined) {
+        p.then(() => { video.pause(); doSeek(); }).catch(() => doSeek());
+      } else {
+        doSeek();
+      }
     };
 
     video.addEventListener('seeked', () => {
@@ -745,10 +767,12 @@ function extractVideoFrameWithDataUrl(file) {
 
     video.addEventListener('loadedmetadata', trySeek);
     video.addEventListener('loadeddata',     trySeek);
+    video.addEventListener('canplay',        trySeek);
     video.addEventListener('error', () => { clearTimeout(timeout); cleanup(); reject(new Error('Decode error')); });
-    video.muted   = true;
-    video.preload = 'auto';
-    video.src     = url;
+    video.muted       = true;
+    video.playsInline = true;
+    video.preload     = 'auto';
+    video.src         = url;
   });
 }
 

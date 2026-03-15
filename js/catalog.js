@@ -14,7 +14,7 @@ async function load() {
   listEl.innerHTML = '<p class="status-msg">Loading…</p>';
 
   const [movementsResult, groupsResult] = await Promise.all([
-    client.from('movements').select('id, name, tags, alt_names, created_at').order('name'),
+    client.from('movements').select('id, name, tags, alt_names, created_at').is('archived_at', null).order('name'),
     client.from('tags').select('name').order('name')
   ]);
 

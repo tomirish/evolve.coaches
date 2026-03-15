@@ -16,13 +16,23 @@ document.querySelectorAll('.admin-tab').forEach(tab => {
 const movementList     = document.getElementById('movement-list');
 const movementErrorMsg = document.getElementById('movement-error-msg');
 const movementSearch   = document.getElementById('movement-search');
+const dupFilterBtn     = document.getElementById('dup-filter-btn');
+const archiveBar       = document.getElementById('archive-bar');
+const archiveCount     = document.getElementById('archive-count');
+const archiveBtn       = document.getElementById('archive-btn');
+
+let showDupsOnly = false;
+let selectedIds  = new Set();
 
 async function loadMovements() {
   movementList.innerHTML = '<li class="status-msg">Loading…</li>';
+  selectedIds.clear();
+  updateArchiveBar();
 
   const { data, error } = await client
     .from('movements')
     .select('id, name, video_path, created_at, uploaded_by')
+    .is('archived_at', null)
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -30,7 +40,6 @@ async function loadMovements() {
     return;
   }
 
-  // Fetch uploader names in bulk
   const uploaderIds = [...new Set(data.map(m => m.uploaded_by).filter(Boolean))];
   let profileMap = {};
   if (uploaderIds.length > 0) {
@@ -42,68 +51,166 @@ async function loadMovements() {
   }
 
   allMovements = data.map(m => ({ ...m, uploaderName: profileMap[m.uploaded_by] || 'Unknown' }));
-  applyMovementSearch();
+  applyMovementFilter();
 }
 
-function applyMovementSearch() {
-  const query    = movementSearch.value.trim().toLowerCase();
-  const filtered = query
+function applyMovementFilter() {
+  const query = movementSearch.value.trim().toLowerCase();
+  let filtered = query
     ? allMovements.filter(m => m.name.toLowerCase().includes(query))
     : allMovements;
+
+  if (showDupsOnly) {
+    const counts = {};
+    filtered.forEach(m => {
+      const key = m.name.trim().toLowerCase();
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    filtered = filtered.filter(m => counts[m.name.trim().toLowerCase()] > 1);
+  }
+
   renderMovements(filtered);
 }
 
 function renderMovements(data) {
   if (data.length === 0) {
-    movementList.innerHTML = '<li class="status-msg">No movements found.</li>';
+    const msg = showDupsOnly ? 'No duplicate movement names found.' : 'No movements found.';
+    movementList.innerHTML = `<li class="status-msg">${msg}</li>`;
     return;
   }
 
-  movementList.innerHTML = data.map(m => `
-    <li class="admin-list-item">
-      <div>
+  if (showDupsOnly) {
+    renderMovementsDuped(data);
+  } else {
+    renderMovementsList(data);
+  }
+}
+
+function movementRowHtml(m) {
+  const checked = selectedIds.has(m.id) ? 'checked' : '';
+  return `
+    <li class="admin-list-item" data-id="${m.id}">
+      <input type="checkbox" class="admin-row-check" data-id="${m.id}" ${checked}>
+      <div class="admin-thumb" data-path="${escape(m.video_path)}" title="Preview video">&#9654;</div>
+      <div class="admin-item-body">
         <div class="admin-user-name">${escape(m.name)}</div>
         <div class="admin-item-date">Uploaded by ${escape(m.uploaderName)} · ${formatDate(m.created_at)}</div>
       </div>
       <div class="admin-user-actions">
         <button class="btn-sm" onclick="location.href='movement.html?id=${m.id}&edit=1'">Edit</button>
-        <button class="btn-delete" data-id="${m.id}" data-name="${escape(m.name)}" data-path="${escape(m.video_path)}">Delete</button>
       </div>
     </li>
-  `).join('');
+  `;
 }
 
-movementSearch.addEventListener('input', applyMovementSearch);
+function renderMovementsList(data) {
+  movementList.innerHTML = data.map(movementRowHtml).join('');
+}
 
-movementList.addEventListener('click', async (e) => {
-  const btn = e.target.closest('.btn-delete');
-  if (!btn) return;
+function renderMovementsDuped(data) {
+  const groups = {};
+  data.forEach(m => {
+    const key = m.name.trim().toLowerCase();
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(m);
+  });
 
-  const { id, name, path } = btn.dataset;
+  const html = Object.values(groups).map(group => {
+    const header = `<li class="admin-dup-header">${escape(group[0].name)} · ${group.length} copies</li>`;
+    return header + group.map(movementRowHtml).join('');
+  }).join('');
 
-  if (!confirm(`Delete "${name}"? This will permanently remove the video and cannot be undone.`)) return;
+  movementList.innerHTML = html;
+}
 
-  btn.disabled    = true;
-  btn.textContent = 'Deleting…';
+function updateArchiveBar() {
+  if (selectedIds.size === 0) {
+    archiveBar.classList.add('hidden');
+  } else {
+    archiveBar.classList.remove('hidden');
+    archiveCount.textContent = `${selectedIds.size} selected`;
+  }
+}
+
+movementSearch.addEventListener('input', applyMovementFilter);
+
+dupFilterBtn.addEventListener('click', () => {
+  showDupsOnly = !showDupsOnly;
+  dupFilterBtn.classList.toggle('active', showDupsOnly);
+  applyMovementFilter();
+});
+
+movementList.addEventListener('change', (e) => {
+  const cb = e.target.closest('.admin-row-check');
+  if (!cb) return;
+  if (cb.checked) selectedIds.add(cb.dataset.id);
+  else selectedIds.delete(cb.dataset.id);
+  updateArchiveBar();
+});
+
+movementList.addEventListener('click', (e) => {
+  const thumb = e.target.closest('.admin-thumb');
+  if (thumb) { openAdminVideoModal(thumb.dataset.path); return; }
+});
+
+archiveBtn.addEventListener('click', async () => {
+  const count = selectedIds.size;
+  if (!count) return;
+  const label = count === 1 ? '1 movement' : `${count} movements`;
+  if (!confirm(`You are archiving ${label}. They will no longer appear in the catalog. Continue?`)) return;
+
+  archiveBtn.disabled    = true;
+  archiveBtn.textContent = 'Archiving…';
   movementErrorMsg.classList.add('hidden');
 
-  const { error: dbError } = await client
+  const { error } = await client
     .from('movements')
-    .delete()
-    .eq('id', id);
+    .update({ archived_at: new Date().toISOString() })
+    .in('id', [...selectedIds]);
 
-  if (dbError) {
-    btn.disabled    = false;
-    btn.textContent = 'Delete';
-    movementErrorMsg.textContent = 'Failed to delete. Please try again.';
+  archiveBtn.disabled    = false;
+  archiveBtn.textContent = 'Archive Selected';
+
+  if (error) {
+    movementErrorMsg.textContent = 'Failed to archive. Please try again.';
     movementErrorMsg.classList.remove('hidden');
     return;
   }
 
-  const { error: storageError } = await callEdgeFunction('r2-delete', { path });
-  if (storageError) console.error('Storage delete failed:', path, storageError);
   loadMovements();
 });
+
+// ── Admin video modal ──────────────────────────────────────────
+function openAdminVideoModal(path) {
+  const modal   = document.getElementById('admin-video-modal');
+  const video   = document.getElementById('admin-modal-video');
+  const loading = document.getElementById('admin-modal-loading');
+  video.style.display = 'none';
+  video.src = '';
+  loading.style.display = 'block';
+  modal.classList.remove('hidden');
+  modal.onclick = (e) => { if (e.target === modal) closeAdminVideoModal(); };
+
+  callEdgeFunction('r2-signed-url', { path }).then(result => {
+    if (result.error || !result.signedUrl) {
+      loading.textContent = 'Could not load video.';
+      return;
+    }
+    loading.style.display = 'none';
+    video.style.display   = 'block';
+    video.src   = result.signedUrl;
+    video.muted = true;
+    video.play();
+  });
+}
+
+function closeAdminVideoModal() {
+  const modal = document.getElementById('admin-video-modal');
+  modal.classList.add('hidden');
+  const video = document.getElementById('admin-modal-video');
+  video.pause();
+  video.src = '';
+}
 
 function formatDate(iso) {
   return new Date(iso).toLocaleDateString('en-IE', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -121,7 +228,7 @@ async function loadGroups() {
 
   const [tagsResult, movementsResult] = await Promise.all([
     client.from('tags').select('id, name').order('name'),
-    client.from('movements').select('tags'),
+    client.from('movements').select('tags').is('archived_at', null),
   ]);
 
   if (tagsResult.error) {
@@ -461,6 +568,10 @@ userList.addEventListener('click', async (e) => {
 });
 
 // ── Init ─────────────────────────────────────────────────────
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeAdminVideoModal();
+});
+
 loadMovements();
 loadGroups();
 loadUsers();

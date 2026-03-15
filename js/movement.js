@@ -12,7 +12,7 @@ let muscleGroups = [];
 // ── Load ─────────────────────────────────────────────────────
 async function load() {
   const [movementResult, groupsResult] = await Promise.all([
-    client.from('movements').select('*').eq('id', id).single(),
+    client.from('movements').select('*').eq('id', id).is('archived_at', null).single(),
     client.from('tags').select('name').order('name')
   ]);
 
@@ -197,9 +197,9 @@ async function renderEdit() {
   }
 }
 
-// ── Delete ────────────────────────────────────────────────────
+// ── Delete (soft) ─────────────────────────────────────────────
 async function deleteMovement() {
-  if (!confirm(`Delete "${movement.name}"? This will permanently remove the video and cannot be undone.`)) return;
+  if (!confirm(`You are archiving "${movement.name}". It will no longer appear in the catalog. Continue?`)) return;
 
   const deleteBtn = document.getElementById('delete-btn');
   deleteBtn.disabled    = true;
@@ -207,7 +207,7 @@ async function deleteMovement() {
 
   const { error: dbError } = await client
     .from('movements')
-    .delete()
+    .update({ archived_at: new Date().toISOString() })
     .eq('id', id);
 
   if (dbError) {
@@ -218,9 +218,6 @@ async function deleteMovement() {
     err.classList.remove('hidden');
     return;
   }
-
-  const { error: storageError } = await callEdgeFunction('r2-delete', { path: movement.video_path });
-  if (storageError) console.error('Storage delete failed:', movement.video_path, storageError);
 
   window.location.href = 'catalog.html';
 }

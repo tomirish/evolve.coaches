@@ -91,7 +91,9 @@ function movementRowHtml(m) {
   return `
     <li class="admin-list-item" data-id="${m.id}">
       <input type="checkbox" class="admin-row-check" data-id="${m.id}" ${checked}>
-      <div class="admin-thumb" data-path="${escape(m.video_path)}" title="Preview video">&#9654;</div>
+      <div class="admin-thumb" data-path="${escape(m.video_path)}" title="Preview video">
+        <div class="admin-thumb-play">&#9654;</div>
+      </div>
       <div class="admin-item-body">
         <div class="admin-user-name">${escape(m.name)}</div>
         <div class="admin-item-date">Uploaded by ${escape(m.uploaderName)} · ${formatDate(m.created_at)}</div>
@@ -103,8 +105,64 @@ function movementRowHtml(m) {
   `;
 }
 
+// ── Lazy thumbnails via IntersectionObserver ──────────────────
+const thumbObserver = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (!entry.isIntersecting) return;
+    const thumb = entry.target;
+    thumbObserver.unobserve(thumb);
+    loadThumb(thumb);
+  });
+}, { rootMargin: '200px' });
+
+function observeThumbs() {
+  movementList.querySelectorAll('.admin-thumb:not([data-thumb-loaded])').forEach(thumb => {
+    thumbObserver.observe(thumb);
+  });
+}
+
+async function loadThumb(thumbEl) {
+  thumbEl.dataset.thumbLoaded = '1';
+  const path = thumbEl.dataset.path;
+
+  // Reuse the same sessionStorage cache as movement.js
+  const cacheKey = `signed-url:${path}`;
+  let signedUrl  = null;
+  const cached   = sessionStorage.getItem(cacheKey);
+  if (cached) {
+    try {
+      const { url, expires } = JSON.parse(cached);
+      if (Date.now() < expires) signedUrl = url;
+    } catch {}
+  }
+
+  if (!signedUrl) {
+    const result = await callEdgeFunction('r2-signed-url', { path });
+    if (result.error || !result.signedUrl) return;
+    signedUrl = result.signedUrl;
+    try {
+      sessionStorage.setItem(cacheKey, JSON.stringify({
+        url:     signedUrl,
+        expires: Date.now() + 23 * 60 * 60 * 1000,
+      }));
+    } catch {}
+  }
+
+  // Use a <video> element directly — avoids canvas cross-origin taint issues
+  const video       = document.createElement('video');
+  video.muted       = true;
+  video.playsInline = true;
+  video.preload     = 'auto';
+  video.src         = signedUrl;
+  video.addEventListener('loadedmetadata', () => {
+    video.currentTime = Math.min(1, (video.duration || 0) * 0.1);
+  });
+  thumbEl.insertBefore(video, thumbEl.firstChild);
+}
+
 function renderMovementsList(data) {
   movementList.innerHTML = data.map(movementRowHtml).join('');
+  observeThumbs();
 }
 
 function renderMovementsDuped(data) {
@@ -121,6 +179,7 @@ function renderMovementsDuped(data) {
   }).join('');
 
   movementList.innerHTML = html;
+  observeThumbs();
 }
 
 function updateArchiveBar() {

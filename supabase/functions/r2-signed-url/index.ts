@@ -3,7 +3,7 @@ import { S3Client, GetObjectCommand } from "npm:@aws-sdk/client-s3";
 import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner";
 
 const BUCKET = "evolve-coaches-videos";
-const ALLOWED_ORIGINS = ["https://tomirish.github.io"];
+const ALLOWED_ORIGINS = ["https://tomirish.github.io", "http://localhost:8080"];
 
 function getCors(req: Request) {
   const origin = req.headers.get("origin") || "";

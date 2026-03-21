@@ -4,7 +4,7 @@ import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
 const BUCKET = "evolve-coaches-videos";
-const ALLOWED_ORIGINS = ["https://tomirish.github.io"];
+const ALLOWED_ORIGINS = ["https://tomirish.github.io", "http://localhost:8080"];
 
 function getCors(req: Request) {
   const origin = req.headers.get("origin") || "";

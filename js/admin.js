@@ -143,7 +143,7 @@ async function loadThumb(thumbEl) {
     try {
       sessionStorage.setItem(cacheKey, JSON.stringify({
         url:     signedUrl,
-        expires: Date.now() + 23 * 60 * 60 * 1000,
+        expires: Date.now() + 60 * 60 * 1000,
       }));
     } catch {}
   }

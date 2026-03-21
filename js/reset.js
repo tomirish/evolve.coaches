@@ -122,8 +122,8 @@ function showNewPasswordForm() {
     const btn      = document.getElementById('save-btn');
     const errorMsg = document.getElementById('error-msg');
 
-    if (password.length < 6) {
-      errorMsg.textContent = 'Password must be at least 6 characters.';
+    if (password.length < 8) {
+      errorMsg.textContent = 'Password must be at least 8 characters.';
       errorMsg.classList.remove('hidden');
       return;
     }

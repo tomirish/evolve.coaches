@@ -47,10 +47,9 @@ async function load() {
   }
 
   if (!signedUrl) {
-    // Cache for 23 hours to stay within the 24h expiry
     sessionStorage.setItem(cacheKey, JSON.stringify({
       url:     signedResult.signedUrl,
-      expires: Date.now() + 23 * 60 * 60 * 1000,
+      expires: Date.now() + 60 * 60 * 1000,
     }));
   }
 
@@ -344,7 +343,7 @@ async function replaceVideo() {
   }
 
   const { error: oldFileError } = await callEdgeFunction('r2-delete', { path: oldPath });
-  if (oldFileError) console.error('Storage delete failed for old video:', oldPath, oldFileError);
+  // Old file delete failure is non-fatal — orphaned file is invisible to coaches
   movement.video_path = filename;
 
   const signed = await callEdgeFunction('r2-signed-url', { path: movement.video_path });

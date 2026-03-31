@@ -91,8 +91,8 @@ function movementRowHtml(m) {
   return `
     <li class="admin-list-item" data-id="${m.id}">
       <input type="checkbox" class="admin-row-check" data-id="${m.id}" ${checked}>
-      <div class="admin-thumb" data-path="${escape(m.video_path)}" title="Preview video">
-        <div class="admin-thumb-play">&#9654;</div>
+      <div class="admin-thumb" data-path="${escape(m.video_path)}" title="Preview file">
+        ${!isImagePath(m.video_path) ? '<div class="admin-thumb-play">&#9654;</div>' : ''}
       </div>
       <div class="admin-item-body">
         <div class="admin-user-name">${escape(m.name)}</div>
@@ -148,16 +148,22 @@ async function loadThumb(thumbEl) {
     } catch {}
   }
 
-  // Use a <video> element directly — avoids canvas cross-origin taint issues
-  const video       = document.createElement('video');
-  video.muted       = true;
-  video.playsInline = true;
-  video.preload     = 'auto';
-  video.src         = signedUrl;
-  video.addEventListener('loadedmetadata', () => {
-    video.currentTime = Math.min(1, (video.duration || 0) * 0.1);
-  });
-  thumbEl.insertBefore(video, thumbEl.firstChild);
+  if (isImagePath(path)) {
+    const img = document.createElement('img');
+    img.src   = signedUrl;
+    thumbEl.insertBefore(img, thumbEl.firstChild);
+  } else {
+    // Use a <video> element directly — avoids canvas cross-origin taint issues
+    const video       = document.createElement('video');
+    video.muted       = true;
+    video.playsInline = true;
+    video.preload     = 'auto';
+    video.src         = signedUrl;
+    video.addEventListener('loadedmetadata', () => {
+      video.currentTime = Math.min(1, (video.duration || 0) * 0.1);
+    });
+    thumbEl.insertBefore(video, thumbEl.firstChild);
+  }
 }
 
 function renderMovementsList(data) {
@@ -245,21 +251,33 @@ function openAdminVideoModal(path) {
   const video   = document.getElementById('admin-modal-video');
   const loading = document.getElementById('admin-modal-loading');
   video.style.display = 'none';
+  video.pause();
   video.src = '';
+  const existingImg = document.getElementById('admin-modal-image');
+  if (existingImg) existingImg.remove();
   loading.style.display = 'block';
+  loading.textContent   = 'Loading…';
   modal.classList.remove('hidden');
   modal.onclick = (e) => { if (e.target === modal) closeAdminVideoModal(); };
 
   callEdgeFunction('r2-signed-url', { path }).then(result => {
     if (result.error || !result.signedUrl) {
-      loading.textContent = 'Could not load video.';
+      loading.textContent = 'Could not load file.';
       return;
     }
     loading.style.display = 'none';
-    video.style.display   = 'block';
-    video.src   = result.signedUrl;
-    video.muted = true;
-    video.play();
+    if (isImagePath(path)) {
+      const img = document.createElement('img');
+      img.id    = 'admin-modal-image';
+      img.src   = result.signedUrl;
+      img.style.cssText = 'max-width:100%;max-height:80vh;display:block;';
+      modal.querySelector('.modal-box').appendChild(img);
+    } else {
+      video.style.display = 'block';
+      video.src   = result.signedUrl;
+      video.muted = true;
+      video.play();
+    }
   });
 }
 
@@ -269,6 +287,8 @@ function closeAdminVideoModal() {
   const video = document.getElementById('admin-modal-video');
   video.pause();
   video.src = '';
+  const img = document.getElementById('admin-modal-image');
+  if (img) img.remove();
 }
 
 function formatDate(iso) {

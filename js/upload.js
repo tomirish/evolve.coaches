@@ -361,7 +361,7 @@ function activateBulk(files) {
 
 function addFilesToQueue(files) {
   for (const file of files) {
-    if (!file.type.startsWith('video/')) continue;
+    if (!file.type.startsWith('video/') && !file.type.startsWith('image/')) continue;
     const item = { id: crypto.randomUUID(), file, name: '', tags: [], status: 'detecting', progress: 0, errorMsg: '' };
     queue.push(item);
     appendBulkRow(item);
@@ -373,7 +373,9 @@ function addFilesToQueue(files) {
 // ── Bulk OCR ──────────────────────────────────────────────────────────────────
 async function runBulkOcr(item) {
   try {
-    const { base64, dataUrl } = await extractVideoFrameWithDataUrl(item.file);
+    const { base64, dataUrl } = isImagePath(item.file.name)
+      ? await readImageAsBase64(item.file)
+      : await extractVideoFrameWithDataUrl(item.file);
 
     const thumbImg = document.querySelector(`[data-id="${item.id}"] .bulk-thumb img`);
     if (thumbImg) {
@@ -650,7 +652,7 @@ function appendBulkRow(item) {
     <div class="bulk-thumb">
       <img src="" class="hidden" alt="">
       <div class="bulk-thumb-placeholder"></div>
-      <div class="thumb-play-overlay">&#9654;</div>
+      ${!isImagePath(item.file.name) ? '<div class="thumb-play-overlay">&#9654;</div>' : ''}
     </div>
     <div class="bulk-row-body">
       <div class="bulk-name-row">
@@ -675,7 +677,7 @@ function appendBulkRow(item) {
   });
   row.querySelector('.bulk-thumb').addEventListener('click', () => {
     const i = queue.find(q => q.id === row.dataset.id);
-    if (i && i.file) openVideoModal(i.file);
+    if (i && i.file && !isImagePath(i.file.name)) openVideoModal(i.file);
   });
 
   bulkQueueEl.appendChild(row);

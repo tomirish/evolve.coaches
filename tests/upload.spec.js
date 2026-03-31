@@ -235,4 +235,39 @@ test.describe('Upload page', () => {
     await expect(page.locator('#name')).toHaveValue('My Custom Movement');
   });
 
+  test('bulk mode accepts a mix of image and video files', async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+
+    await page.setInputFiles('#video-file', [
+      { name: 'exercise.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake1') },
+      { name: 'clip.mp4',     mimeType: 'video/mp4',  buffer: Buffer.from('fake2') },
+    ]);
+
+    // Both rows appear in the queue
+    await expect(page.locator('.bulk-row')).toHaveCount(2, { timeout: 10000 });
+  });
+
+  test('image row in bulk mode has no play overlay', async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+
+    await page.setInputFiles('#video-file', [
+      { name: 'exercise.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake1') },
+      { name: 'clip.mp4',     mimeType: 'video/mp4',  buffer: Buffer.from('fake2') },
+    ]);
+
+    await expect(page.locator('.bulk-row')).toHaveCount(2, { timeout: 10000 });
+
+    const rows = page.locator('.bulk-row');
+    // Image file is passed first, so it's at index 0; video is at index 1
+    const imageRow = rows.nth(0);
+    const videoRow = rows.nth(1);
+
+    // Image row: no play overlay (or hidden)
+    await expect(imageRow.locator('.thumb-play-overlay')).toBeHidden();
+    // Video row: play overlay visible
+    await expect(videoRow.locator('.thumb-play-overlay')).toBeVisible();
+  });
+
 });

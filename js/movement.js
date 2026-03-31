@@ -128,11 +128,15 @@ async function renderEdit() {
     return `<label class="pill"><input type="checkbox" value="${escape(g)}" ${checked}> ${escape(g)}</label>`;
   }).join('');
 
+  const editMediaHtml = isImagePath(movement.video_path)
+    ? `<img class="video-player" src="${movement.signedUrl}" alt="${escape(movement.name)}" id="edit-image">`
+    : `<video class="video-player" controls playsinline id="video-player">
+        <source src="${movement.signedUrl}" type="video/mp4">
+        Your browser does not support video playback.
+       </video>`;
+
   contentEl.innerHTML = `
-    <video class="video-player" controls playsinline id="video-player">
-      <source src="${movement.signedUrl}" type="video/mp4">
-      Your browser does not support video playback.
-    </video>
+    ${editMediaHtml}
 
     <form id="edit-form">
       <div id="error-msg" class="error hidden"></div>
@@ -364,6 +368,8 @@ async function replaceVideo() {
       videoEl.src = signed.signedUrl;
       videoEl.parentElement.load();
     }
+    const imgEl = document.querySelector('#edit-image');
+    if (imgEl) imgEl.src = signed.signedUrl;
   }
 
   progressWrap.classList.add('hidden');

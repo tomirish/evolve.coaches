@@ -99,8 +99,32 @@ function openVideoModal(file) {
   modalObjectUrl = URL.createObjectURL(file);
   const video = document.getElementById('modal-video');
   video.src = modalObjectUrl;
+  video.classList.remove('hidden');
   video.muted = true;
   video.play();
+  const img = document.getElementById('modal-image');
+  if (img) img.classList.add('hidden');
+  const modal = document.getElementById('video-modal');
+  modal.classList.remove('hidden');
+  modal.onclick = (e) => { if (e.target === modal) closeVideoModal(); };
+}
+
+function openImageModal(file) {
+  if (modalObjectUrl) URL.revokeObjectURL(modalObjectUrl);
+  modalObjectUrl = URL.createObjectURL(file);
+  const video = document.getElementById('modal-video');
+  video.pause();
+  video.src = '';
+  video.classList.add('hidden');
+  let img = document.getElementById('modal-image');
+  if (!img) {
+    img = document.createElement('img');
+    img.id = 'modal-image';
+    img.style.cssText = 'max-width:100%;max-height:80vh;display:block;';
+    document.querySelector('#video-modal .modal-box').appendChild(img);
+  }
+  img.src = modalObjectUrl;
+  img.classList.remove('hidden');
   const modal = document.getElementById('video-modal');
   modal.classList.remove('hidden');
   modal.onclick = (e) => { if (e.target === modal) closeVideoModal(); };
@@ -112,6 +136,8 @@ function closeVideoModal() {
   const video = document.getElementById('modal-video');
   video.pause();
   video.src = '';
+  const img = document.getElementById('modal-image');
+  if (img) { img.src = ''; img.classList.add('hidden'); }
   if (modalObjectUrl) { URL.revokeObjectURL(modalObjectUrl); modalObjectUrl = null; }
 }
 
@@ -677,7 +703,9 @@ function appendBulkRow(item) {
   });
   row.querySelector('.bulk-thumb').addEventListener('click', () => {
     const i = queue.find(q => q.id === row.dataset.id);
-    if (i && i.file && !isImagePath(i.file.name)) openVideoModal(i.file);
+    if (!i || !i.file) return;
+    if (isImagePath(i.file.name)) openImageModal(i.file);
+    else openVideoModal(i.file);
   });
 
   bulkQueueEl.appendChild(row);

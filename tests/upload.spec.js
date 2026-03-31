@@ -157,6 +157,27 @@ test.describe('Upload page', () => {
     await expect(page.locator('#name-ocr-hint')).toBeHidden();
   });
 
+  test('HEIC file is silently converted to JPEG', async ({ page }) => {
+    await mockVisionName(page, 'Deadlift');
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+
+    // Mock heic2any before file selection
+    await page.evaluate(() => {
+      window.heic2any = ({ blob }) =>
+        Promise.resolve(new Blob(['fake-jpeg-data'], { type: 'image/jpeg' }));
+    });
+
+    await page.setInputFiles('#video-file', {
+      name: 'exercise.heic',
+      mimeType: 'image/heic',
+      buffer: Buffer.from('fake'),
+    });
+
+    // File label should show the converted .jpg name
+    await expect(page.locator('#file-label')).toHaveText('exercise.jpg', { timeout: 5000 });
+  });
+
   test('AI does not overwrite a manually edited name', async ({ page }) => {
     await mockVisionName(page, 'Barbell Back Squat');
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);

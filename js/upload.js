@@ -46,6 +46,20 @@ const OCR_CONCURRENCY = 4;
 let ocrInFlight = 0;
 const ocrPending = [];
 
+// ── HEIC/HEIF conversion ──────────────────────────────────────────────────────
+
+async function maybeConvertHeic(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+  const isHeic = ext === 'heic' || ext === 'heif' ||
+                 file.type === 'image/heic' || file.type === 'image/heif';
+  if (!isHeic) return file;
+  if (typeof heic2any === 'undefined') return file;  // CDN failed to load — pass through
+  const blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.85 });
+  const converted = Array.isArray(blob) ? blob[0] : blob;
+  const newName = file.name.replace(/\.(heic|heif)$/i, '.jpg');
+  return new File([converted], newName, { type: 'image/jpeg' });
+}
+
 function scheduleOcr(item) {
   ocrPending.push(item);
   drainOcrQueue();
@@ -97,15 +111,20 @@ document.addEventListener('keydown', (e) => {
 // FILE INPUT
 // ─────────────────────────────────────────────────────────────────────────────
 
-fileInput.addEventListener('change', () => {
-  const files = Array.from(fileInput.files);
-  if (!files.length) return;
-  if (files.length === 1) {
-    activateSingle(files[0]);
-  } else {
-    activateBulk(files);
-  }
+fileInput.addEventListener('change', async () => {
+  const rawFiles = Array.from(fileInput.files);
+  if (!rawFiles.length) return;
   fileInput.value = '';
+  try {
+    const files = await Promise.all(rawFiles.map(maybeConvertHeic));
+    if (files.length === 1) {
+      activateSingle(files[0]);
+    } else {
+      activateBulk(files);
+    }
+  } catch {
+    showSingleError('Could not process file. Please try a JPEG or MP4 instead.');
+  }
 });
 
 fileDropEl.addEventListener('dragover', (e) => {
@@ -115,17 +134,24 @@ fileDropEl.addEventListener('dragover', (e) => {
 fileDropEl.addEventListener('dragleave', () => {
   fileDropEl.style.borderColor = '';
 });
-fileDropEl.addEventListener('drop', (e) => {
+fileDropEl.addEventListener('drop', async (e) => {
   e.preventDefault();
   fileDropEl.style.borderColor = '';
-  const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('video/'));
-  if (!files.length) return;
-  if (currentMode === 'bulk') {
-    addFilesToQueue(files);
-    return;
+  const rawFiles = Array.from(e.dataTransfer.files).filter(f =>
+    f.type.startsWith('video/') || f.type.startsWith('image/')
+  );
+  if (!rawFiles.length) return;
+  try {
+    const files = await Promise.all(rawFiles.map(maybeConvertHeic));
+    if (currentMode === 'bulk') {
+      addFilesToQueue(files);
+      return;
+    }
+    if (files.length === 1) activateSingle(files[0]);
+    else activateBulk(files);
+  } catch {
+    showSingleError('Could not process file. Please try a JPEG or MP4 instead.');
   }
-  if (files.length === 1) activateSingle(files[0]);
-  else activateBulk(files);
 });
 
 // ─────────────────────────────────────────────────────────────────────────────

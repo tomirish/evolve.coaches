@@ -42,7 +42,7 @@ async function load() {
   ]);
 
   if (signedResult.error || !signedResult.signedUrl) {
-    contentEl.innerHTML = '<p class="status-msg error">Could not load video. Please try again.</p>';
+    contentEl.innerHTML = '<p class="status-msg error">Could not load file. Please try again.</p>';
     return;
   }
 
@@ -165,12 +165,12 @@ async function renderEdit() {
     </form>
 
     <section class="admin-section" style="margin-top: 2rem;">
-      <h2 class="admin-section-title">Replace Video</h2>
+      <h2 class="admin-section-title">Replace File</h2>
       <div id="replace-error" class="error hidden"></div>
       <div id="replace-success" class="success hidden"></div>
       <div class="file-drop" id="replace-drop">
-        <input type="file" id="replace-file" accept="video/*">
-        <p id="replace-label">Tap to select a replacement video</p>
+        <input type="file" id="replace-file" accept="video/*,image/*">
+        <p id="replace-label">Tap to select a replacement file</p>
       </div>
       <div class="progress-wrap hidden" id="replace-progress-wrap">
         <div class="progress-bar">
@@ -178,7 +178,7 @@ async function renderEdit() {
         </div>
         <p class="progress-text" id="replace-progress-text">Uploading…</p>
       </div>
-      <button type="button" class="btn btn-primary" id="replace-btn" style="margin-top: 1rem;">Replace Video</button>
+      <button type="button" class="btn btn-primary" id="replace-btn" style="margin-top: 1rem;">Replace File</button>
     </section>
 
     ${isAdmin ? `<button type="button" class="btn btn-danger" id="delete-btn" style="margin-top: 0.5rem;">Delete Movement</button>` : ''}
@@ -189,12 +189,12 @@ async function renderEdit() {
   document.getElementById('replace-file').addEventListener('change', () => {
     const file = document.getElementById('replace-file').files[0];
     if (!file) {
-      document.getElementById('replace-label').textContent = 'Tap to select a replacement video';
+      document.getElementById('replace-label').textContent = 'Tap to select a replacement file';
       return;
     }
     if (file.size > MAX_FILE_SIZE) {
       document.getElementById('replace-file').value = '';
-      document.getElementById('replace-label').textContent = 'Tap to select a replacement video';
+      document.getElementById('replace-label').textContent = 'Tap to select a replacement file';
       document.getElementById('replace-error').textContent = 'File is too large. Maximum size is 500 MB.';
       document.getElementById('replace-error').classList.remove('hidden');
       return;
@@ -291,7 +291,7 @@ async function replaceVideo() {
   replaceSuccess.classList.add('hidden');
 
   if (!file) {
-    replaceError.textContent = 'Please select a video file.';
+    replaceError.textContent = 'Please select a file.';
     replaceError.classList.remove('hidden');
     return;
   }
@@ -313,7 +313,7 @@ async function replaceVideo() {
     replaceError.textContent = 'Upload failed. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
-    replaceBtn.textContent = 'Replace Video';
+    replaceBtn.textContent = 'Replace File';
     progressWrap.classList.add('hidden');
     progressFill.style.width = '0%';
     return;
@@ -328,7 +328,7 @@ async function replaceVideo() {
     replaceError.textContent = 'Upload failed. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
-    replaceBtn.textContent = 'Replace Video';
+    replaceBtn.textContent = 'Replace File';
     progressWrap.classList.add('hidden');
     progressFill.style.width = '0%';
     return;
@@ -346,7 +346,7 @@ async function replaceVideo() {
     replaceError.textContent = 'Failed to save. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
-    replaceBtn.textContent = 'Replace Video';
+    replaceBtn.textContent = 'Replace File';
     progressWrap.classList.add('hidden');
     progressFill.style.width = '0%';
     return;
@@ -369,10 +369,10 @@ async function replaceVideo() {
   progressWrap.classList.add('hidden');
   progressFill.style.width = '0%';
   replaceBtn.disabled    = false;
-  replaceBtn.textContent = 'Replace Video';
+  replaceBtn.textContent = 'Replace File';
   document.getElementById('replace-file').value = '';
-  document.getElementById('replace-label').textContent = 'Tap to select a replacement video';
-  replaceSuccess.textContent = 'Video replaced successfully.';
+  document.getElementById('replace-label').textContent = 'Tap to select a replacement file';
+  replaceSuccess.textContent = 'File replaced successfully.';
   replaceSuccess.classList.remove('hidden');
 }
 

@@ -67,4 +67,16 @@ test.describe('Movement detail page — image', () => {
     await page.locator('#edit-btn').click();
     await expect(page.locator('#edit-form')).toBeVisible();
   });
+
+  test('image movement edit mode shows Replace File heading', async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto(`/movement.html?id=${imageFixture.id}`);
+
+    await expect(page.locator('#edit-btn')).toBeVisible({ timeout: 20000 });
+    await page.locator('#edit-btn').click();
+
+    await expect(page.locator('.admin-section-title')).toHaveText('Replace File');
+    await expect(page.locator('#replace-btn')).toHaveText('Replace File');
+    await expect(page.locator('#replace-label')).toContainText('replacement file');
+  });
 });

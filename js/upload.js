@@ -60,6 +60,18 @@ async function maybeConvertHeic(file) {
   return new File([converted], newName, { type: 'image/jpeg' });
 }
 
+function readImageAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result;
+      resolve({ base64: dataUrl.split(',')[1], dataUrl });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 function scheduleOcr(item) {
   ocrPending.push(item);
   drainOcrQueue();
@@ -215,7 +227,7 @@ form.addEventListener('submit', async (e) => {
   ).map(cb => cb.value);
 
   if (!name) { showSingleError('Movement name is required.'); return; }
-  if (!file)  { showSingleError('Please select a video file.'); return; }
+  if (!file)  { showSingleError('Please select a file.'); return; }
   if (file.size > MAX_FILE_SIZE) { showSingleError('File is too large. Maximum size is 500 MB.'); return; }
 
   submitBtn.disabled    = true;
@@ -264,17 +276,29 @@ async function suggestMovementName(file) {
   nameOcrHint.textContent = 'Detecting movement name…';
   nameOcrHint.classList.remove('hidden');
   try {
-    const { base64, dataUrl } = await extractVideoFrameWithDataUrl(file);
-    const previewEl = document.getElementById('single-preview');
-    const thumbEl   = document.getElementById('single-thumb');
+    const { base64, dataUrl } = isImagePath(file.name)
+      ? await readImageAsBase64(file)
+      : await extractVideoFrameWithDataUrl(file);
+
+    const previewEl   = document.getElementById('single-preview');
+    const thumbEl     = document.getElementById('single-thumb');
+    const playOverlay = previewEl ? previewEl.querySelector('.thumb-play-overlay') : null;
+
     if (previewEl && thumbEl) {
       thumbEl.src = dataUrl;
       previewEl.classList.remove('hidden');
-      previewEl.onclick = () => openVideoModal(file);
+      if (isImagePath(file.name)) {
+        if (playOverlay) playOverlay.classList.add('hidden');
+        previewEl.onclick = null;
+      } else {
+        if (playOverlay) playOverlay.classList.remove('hidden');
+        previewEl.onclick = () => openVideoModal(file);
+      }
     }
+
     const result = await callEdgeFunction('vision-name', { image: base64 });
     if (result.error || !result.name) {
-      nameInput.placeholder = 'AI couldn\'t read a name from this video — please type it in.';
+      nameInput.placeholder = 'AI couldn\'t read a name from this file — please type it in.';
       nameInput.closest('.field').classList.add('needs-name');
       nameOcrHint.classList.add('hidden');
       return;
@@ -288,7 +312,7 @@ async function suggestMovementName(file) {
       nameOcrHint.classList.add('hidden');
     }
   } catch {
-    nameInput.placeholder = 'AI couldn\'t read a name from this video — please type it in.';
+    nameInput.placeholder = 'AI couldn\'t read a name from this file — please type it in.';
     nameOcrHint.classList.add('hidden');
   }
 }

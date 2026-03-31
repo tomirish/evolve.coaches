@@ -178,6 +178,42 @@ test.describe('Upload page', () => {
     await expect(page.locator('#file-label')).toHaveText('exercise.jpg', { timeout: 5000 });
   });
 
+  test('drop zone label mentions photos', async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+    await expect(page.locator('#file-label')).toContainText('photos');
+  });
+
+  test('selecting a JPEG shows preview thumbnail without play overlay', async ({ page }) => {
+    await mockVisionName(page, 'Push-up');
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+
+    await page.setInputFiles('#video-file', {
+      name: 'exercise.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from('fake'),
+    });
+
+    await expect(page.locator('#single-preview')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('#single-preview .thumb-play-overlay')).toBeHidden();
+  });
+
+  test('AI pre-fills movement name after image is selected', async ({ page }) => {
+    await mockVisionName(page, 'Push-up');
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+
+    await page.setInputFiles('#video-file', {
+      name: 'exercise.jpg',
+      mimeType: 'image/jpeg',
+      buffer: Buffer.from('fake'),
+    });
+
+    await expect(page.locator('#name')).toHaveValue('Push-up', { timeout: 5000 });
+    await expect(page.locator('#name-ocr-hint')).toContainText('suggested by AI');
+  });
+
   test('AI does not overwrite a manually edited name', async ({ page }) => {
     await mockVisionName(page, 'Barbell Back Squat');
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);

@@ -78,6 +78,11 @@ function escape(str) {
     .replace(/"/g, '&quot;');
 }
 
+function isImagePath(path) {
+  const ext = (path || '').split('.').pop().toLowerCase();
+  return ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif'].includes(ext);
+}
+
 function getInitials(fullName) {
   if (!fullName) return '?';
   const parts = fullName.trim().split(/\s+/);

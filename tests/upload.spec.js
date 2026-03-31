@@ -47,6 +47,34 @@ const FAKE_VIDEO = {
 
 test.describe('Upload page', () => {
 
+  test('isImagePath returns true for image extensions and false for video', async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    // Any authenticated page loads auth.js — catalog is simplest
+    await page.goto('/catalog.html');
+
+    const results = await page.evaluate(() => ({
+      jpg:  window.isImagePath('thumb.jpg'),
+      jpeg: window.isImagePath('thumb.jpeg'),
+      png:  window.isImagePath('photo.png'),
+      gif:  window.isImagePath('anim.gif'),
+      webp: window.isImagePath('img.webp'),
+      avif: window.isImagePath('img.avif'),
+      mp4:  window.isImagePath('clip.mp4'),
+      mov:  window.isImagePath('clip.mov'),
+      none: window.isImagePath(''),
+    }));
+
+    expect(results.jpg).toBe(true);
+    expect(results.jpeg).toBe(true);
+    expect(results.png).toBe(true);
+    expect(results.gif).toBe(true);
+    expect(results.webp).toBe(true);
+    expect(results.avif).toBe(true);
+    expect(results.mp4).toBe(false);
+    expect(results.mov).toBe(false);
+    expect(results.none).toBe(false);
+  });
+
   // ── Structural ────────────────────────────────────────────────────────────
 
   test('video field appears above movement name field', async ({ page }) => {

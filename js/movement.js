@@ -73,11 +73,15 @@ function renderView() {
     ? movement.alt_names.map(n => `<span class="meta-tag">${escape(n)}</span>`).join('')
     : '<span class="meta-none">None</span>';
 
+  const mediaHtml = isImagePath(movement.video_path)
+    ? `<img class="video-player" src="${movement.signedUrl}" alt="${escape(movement.name)}" id="movement-image" style="cursor:pointer;">`
+    : `<video class="video-player" controls playsinline autoplay muted loop>
+        <source src="${movement.signedUrl}" type="video/mp4">
+        Your browser does not support video playback.
+       </video>`;
+
   contentEl.innerHTML = `
-    <video class="video-player" controls playsinline autoplay muted loop>
-      <source src="${movement.signedUrl}" type="video/mp4">
-      Your browser does not support video playback.
-    </video>
+    ${mediaHtml}
 
     <div class="detail-header">
       <h1 class="detail-title">${escape(movement.name)}</h1>
@@ -104,6 +108,12 @@ function renderView() {
       <p class="detail-comments">${movement.uploaderName ? escape(movement.uploaderName) : '<span class="meta-none">Unknown</span>'}</p>
     </div>
   `;
+
+  if (isImagePath(movement.video_path)) {
+    document.getElementById('movement-image').addEventListener('click', function () {
+      this.requestFullscreen().catch(() => {});
+    });
+  }
 
   document.getElementById('edit-btn').addEventListener('click', renderEdit);
 }

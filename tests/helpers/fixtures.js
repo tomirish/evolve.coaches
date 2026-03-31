@@ -37,4 +37,35 @@ async function teardownMovementFixture(client, id) {
   if (error) throw new Error(`Fixture cleanup failed: ${error.message}`);
 }
 
-module.exports = { setupMovementFixture, teardownMovementFixture };
+async function setupImageMovementFixture(email, password) {
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { error: authError } = await client.auth.signInWithPassword({ email, password });
+  if (authError) throw new Error(`Fixture auth failed: ${authError.message}`);
+
+  const { data: { user } } = await client.auth.getUser();
+
+  const { data, error } = await client.from('movements').insert({
+    name:        '__test_image_fixture__',
+    alt_names:   [],
+    tags:        [],
+    comments:    null,
+    video_path:  'test-fixture.jpg',
+    uploaded_by: user.id,
+  }).select('id').single();
+
+  if (error) throw new Error(`Image fixture insert failed: ${error.message}`);
+  return { client, id: data.id };
+}
+
+async function teardownImageMovementFixture(client, id) {
+  if (!client || !id) return;
+  const { error } = await client.from('movements').delete().eq('id', id);
+  if (error) throw new Error(`Image fixture cleanup failed: ${error.message}`);
+}
+
+module.exports = {
+  setupMovementFixture,
+  teardownMovementFixture,
+  setupImageMovementFixture,
+  teardownImageMovementFixture,
+};

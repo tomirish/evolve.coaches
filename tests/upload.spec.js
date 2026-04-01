@@ -28,13 +28,22 @@ async function mockVisionName(page, name) {
   });
 }
 
+// Patch validateFile so tests with fake file buffers don't fail validation.
+async function mockValidation(page) {
+  await page.evaluate(() => {
+    window.validateFile = () => Promise.resolve({ ok: true });
+  });
+}
+
 // Patch extractVideoFrameWithDataUrl so tests skip real video decoding.
+// Also mocks validateFile — fake video buffers can't pass real validation.
 async function mockFrameExtraction(page) {
   await page.evaluate(() => {
     window.extractVideoFrameWithDataUrl = () => Promise.resolve({
       base64: 'fake-base64',
       dataUrl: 'data:image/jpeg;base64,fake',
     });
+    window.validateFile = () => Promise.resolve({ ok: true });
   });
 }
 
@@ -80,6 +89,7 @@ test.describe('Upload page', () => {
   test('video field appears above movement name field', async ({ page }) => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
+    await mockValidation(page);
 
     // Select a single file to reveal the single-mode form
     await page.setInputFiles('#video-file', FAKE_VIDEO);
@@ -102,6 +112,7 @@ test.describe('Upload page', () => {
   test('selecting a file shows filename and hides AI box hint', async ({ page }) => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
+    await mockValidation(page);
 
     await page.setInputFiles('#video-file', FAKE_VIDEO);
 
@@ -161,6 +172,7 @@ test.describe('Upload page', () => {
     await mockVisionName(page, 'Deadlift');
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
+    await mockValidation(page);
 
     // Mock heic2any before file selection
     await page.evaluate(() => {
@@ -188,6 +200,7 @@ test.describe('Upload page', () => {
     await mockVisionName(page, 'Push-up');
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
+    await mockValidation(page);
 
     await page.setInputFiles('#video-file', {
       name: 'exercise.jpg',
@@ -203,6 +216,7 @@ test.describe('Upload page', () => {
     await mockVisionName(page, 'Push-up');
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
+    await mockValidation(page);
 
     await page.setInputFiles('#video-file', {
       name: 'exercise.jpg',
@@ -238,6 +252,7 @@ test.describe('Upload page', () => {
   test('bulk mode accepts a mix of image and video files', async ({ page }) => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
+    await mockValidation(page);
 
     await page.setInputFiles('#video-file', [
       { name: 'exercise.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake1') },
@@ -251,6 +266,7 @@ test.describe('Upload page', () => {
   test('image row in bulk mode has no play overlay', async ({ page }) => {
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/upload.html');
+    await mockValidation(page);
 
     await page.setInputFiles('#video-file', [
       { name: 'exercise.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('fake1') },
@@ -268,6 +284,51 @@ test.describe('Upload page', () => {
     await expect(imageRow.locator('.thumb-play-overlay')).toBeHidden();
     // Video row: play overlay visible
     await expect(videoRow.locator('.thumb-play-overlay')).toBeVisible();
+  });
+
+  // ── File validation ───────────────────────────────────────────────────────
+
+  test('corrupt video is rejected with an error message', async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+
+    await page.setInputFiles('#video-file', {
+      name:     'corrupt.mp4',
+      mimeType: 'video/mp4',
+      buffer:   Buffer.from('this is not a valid video file'),
+    });
+
+    await expect(page.locator('#error-msg')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#error-msg')).toContainText('corrupt');
+    await expect(page.locator('#submit-btn')).toBeDisabled();
+  });
+
+  test('corrupt image is rejected with an error message', async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+
+    await page.setInputFiles('#video-file', {
+      name:     'corrupt.jpg',
+      mimeType: 'image/jpeg',
+      buffer:   Buffer.from('this is not a valid image file'),
+    });
+
+    await expect(page.locator('#error-msg')).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('#error-msg')).toContainText('corrupt');
+    await expect(page.locator('#submit-btn')).toBeDisabled();
+  });
+
+  test('corrupt video in bulk mode shows error status on that row', async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto('/upload.html');
+
+    await page.setInputFiles('#video-file', [
+      { name: 'corrupt1.mp4', mimeType: 'video/mp4', buffer: Buffer.from('not a valid video') },
+      { name: 'corrupt2.mp4', mimeType: 'video/mp4', buffer: Buffer.from('also not valid') },
+    ]);
+
+    await expect(page.locator('.bulk-row')).toHaveCount(2, { timeout: 5000 });
+    await expect(page.locator('.bulk-status-error').first()).toBeVisible({ timeout: 10000 });
   });
 
 });

@@ -46,6 +46,33 @@ const OCR_CONCURRENCY = 4;
 let ocrInFlight = 0;
 const ocrPending = [];
 
+// ── File validation ───────────────────────────────────────────────────────────
+// Loads just enough of the file for the browser to check the container headers.
+// Resolves { ok: true } on success, { ok: false, error } on decode failure.
+// Timeout resolves as ok — a slow disk is not the same as a corrupt file.
+// Top-level so Playwright tests can patch window.validateFile.
+function validateFile(file) {
+  return new Promise((resolve) => {
+    const url     = URL.createObjectURL(file);
+    const cleanup = () => URL.revokeObjectURL(url);
+
+    if (isImagePath(file.name)) {
+      const img   = new Image();
+      img.onload  = () => { cleanup(); resolve({ ok: true }); };
+      img.onerror = () => { cleanup(); resolve({ ok: false, error: 'This image couldn\'t be opened. The file may be corrupt — try a different file.' }); };
+      img.src     = url;
+    } else {
+      const video   = document.createElement('video');
+      video.muted   = true;
+      video.preload = 'metadata';
+      const timer   = setTimeout(() => { cleanup(); resolve({ ok: true }); }, 8000);
+      video.addEventListener('loadedmetadata', () => { clearTimeout(timer); cleanup(); resolve({ ok: true }); });
+      video.addEventListener('error',          () => { clearTimeout(timer); cleanup(); resolve({ ok: false, error: 'This video couldn\'t be opened. The file may be corrupt — try a different file or export it as MP4.' }); });
+      video.src = url;
+    }
+  });
+}
+
 // ── HEIC/HEIF conversion ──────────────────────────────────────────────────────
 
 async function maybeConvertHeic(file) {
@@ -196,7 +223,7 @@ fileDropEl.addEventListener('drop', async (e) => {
 // SINGLE MODE
 // ─────────────────────────────────────────────────────────────────────────────
 
-function activateSingle(file) {
+async function activateSingle(file) {
   if (currentMode === 'bulk') {
     queue = [];
     bulkQueueEl.innerHTML = '';
@@ -213,11 +240,26 @@ function activateSingle(file) {
     fileLabel.textContent = 'Tap to select videos — or drag here';
     return;
   }
+
   errorMsg.classList.add('hidden');
   fileLabel.textContent = file.name;
   nameInput.placeholder = 'e.g. Barbell Back Squat';
   nameInput.closest('.field').classList.remove('needs-name');
   document.getElementById('single-preview').classList.add('hidden');
+
+  submitBtn.disabled    = true;
+  submitBtn.textContent = 'Checking file…';
+
+  const { ok, error: validationError } = await validateFile(file);
+  if (!ok) {
+    showSingleError(validationError);
+    submitBtn.disabled    = true;
+    submitBtn.textContent = 'Upload Movement';
+    return;
+  }
+
+  submitBtn.disabled    = false;
+  submitBtn.textContent = 'Upload Movement';
   suggestMovementName(file);
 }
 
@@ -398,6 +440,15 @@ function addFilesToQueue(files) {
 
 // ── Bulk OCR ──────────────────────────────────────────────────────────────────
 async function runBulkOcr(item) {
+  const { ok, error: validationError } = await validateFile(item.file);
+  if (!ok) {
+    item.status   = 'error';
+    item.errorMsg = validationError || 'File couldn\'t be opened';
+    updateBulkRow(item.id);
+    syncBulkUI();
+    return;
+  }
+
   try {
     const { base64, dataUrl } = isImagePath(item.file.name)
       ? await readImageAsBase64(item.file)

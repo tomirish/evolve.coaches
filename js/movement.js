@@ -76,7 +76,7 @@ function renderView() {
   const mediaHtml = isImagePath(movement.video_path)
     ? `<img class="video-player" src="${movement.signedUrl}" alt="${escape(movement.name)}" id="movement-image" style="cursor:pointer;">`
     : `<video class="video-player" controls playsinline autoplay muted loop>
-        <source src="${movement.signedUrl}" type="video/mp4">
+        <source src="${movement.signedUrl}">
         Your browser does not support video playback.
        </video>`;
 
@@ -131,7 +131,7 @@ async function renderEdit() {
   const editMediaHtml = isImagePath(movement.video_path)
     ? `<img class="video-player" src="${movement.signedUrl}" alt="${escape(movement.name)}" id="edit-image">`
     : `<video class="video-player" controls playsinline id="video-player">
-        <source src="${movement.signedUrl}" type="video/mp4">
+        <source src="${movement.signedUrl}">
         Your browser does not support video playback.
        </video>`;
 

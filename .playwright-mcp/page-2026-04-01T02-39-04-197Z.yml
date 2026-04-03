@@ -1,0 +1,16 @@
+- generic [ref=e2]:
+  - img "Evolve Strong Fitness" [ref=e3]
+  - paragraph [ref=e4]: Coach Video Library
+  - generic [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]: Email
+      - textbox "Email" [ref=e8]:
+        - /placeholder: you@example.com
+    - generic [ref=e9]:
+      - generic [ref=e10]: Password
+      - textbox "Password" [ref=e11]:
+        - /placeholder: ••••••••
+    - button "Sign In" [ref=e12] [cursor=pointer]
+  - paragraph [ref=e13]:
+    - link "Forgot password?" [ref=e14] [cursor=pointer]:
+      - /url: reset.html

@@ -1,0 +1,15 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e2]:
+    - link "Evolve Coaches Video Library" [ref=e3] [cursor=pointer]:
+      - /url: catalog.html
+      - generic [ref=e4]: Evolve Coaches Video Library
+    - generic [ref=e5]:
+      - link "Catalog" [ref=e6] [cursor=pointer]:
+        - /url: catalog.html
+      - link "Upload" [ref=e7] [cursor=pointer]:
+        - /url: upload.html
+      - button "Sign Out" [ref=e8]
+  - main [ref=e9]:
+    - link "← Back to Catalog" [ref=e10] [cursor=pointer]:
+      - /url: catalog.html
+    - paragraph [ref=e12]: Loading…

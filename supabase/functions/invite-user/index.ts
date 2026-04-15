@@ -55,6 +55,21 @@ Deno.serve(async (req) => {
       })
     }
 
+    const ALLOWED_ROLES = ['admin', 'coach']
+    if (!ALLOWED_ROLES.includes(role)) {
+      return new Response(JSON.stringify({ error: 'Invalid role' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return new Response(JSON.stringify({ error: 'Invalid email format' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Use service role key for privileged operations
     const adminClient = createClient(
       Deno.env.get('SUPABASE_URL')!,

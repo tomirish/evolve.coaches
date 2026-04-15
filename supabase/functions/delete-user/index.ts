@@ -55,6 +55,13 @@ Deno.serve(async (req) => {
       })
     }
 
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user_id)) {
+      return new Response(JSON.stringify({ error: 'Invalid user_id' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
+    }
+
     // Cannot delete your own account
     if (user_id === user.id) {
       return new Response(JSON.stringify({ error: 'Cannot delete your own account' }), {

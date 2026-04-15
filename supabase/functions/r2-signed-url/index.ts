@@ -47,6 +47,13 @@ Deno.serve(async (req: Request) => {
     });
   }
 
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[a-z0-9]+$/i.test(path)) {
+    return new Response(JSON.stringify({ error: "Invalid path" }), {
+      status: 400,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
   const signedUrl = await getSignedUrl(
     r2,
     new GetObjectCommand({ Bucket: BUCKET, Key: path }),

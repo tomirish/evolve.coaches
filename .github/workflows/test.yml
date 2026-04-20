@@ -38,7 +38,7 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      - uses: 1password/install-cli-action@v1
+      - uses: 1password/install-cli-action@v3
 
       - name: Run tests
         env:

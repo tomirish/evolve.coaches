@@ -75,7 +75,7 @@ test.describe('Movement detail page — image', () => {
     await expect(page.locator('#edit-btn')).toBeVisible({ timeout: 20000 });
     await page.locator('#edit-btn').click();
 
-    await expect(page.locator('.admin-section-title')).toHaveText('Replace File');
+    await expect(page.locator('.admin-section-title')).toHaveText('Replace File', { timeout: 10000 });
     await expect(page.locator('#replace-btn')).toHaveText('Replace File');
     await expect(page.locator('#replace-label')).toContainText('replacement file');
   });

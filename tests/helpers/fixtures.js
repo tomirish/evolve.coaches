@@ -23,7 +23,7 @@ async function setupMovementFixture(email, password) {
     alt_names:   [],
     tags:        [],
     comments:    null,
-    video_path:  'test-fixture.mp4',
+    video_path:  '00000000-0000-0000-0000-000000000000.mp4',
     uploaded_by: user.id,
   }).select('id').single();
 
@@ -49,7 +49,7 @@ async function setupImageMovementFixture(email, password) {
     alt_names:   [],
     tags:        [],
     comments:    null,
-    video_path:  'test-fixture.jpg',
+    video_path:  '00000000-0000-0000-0000-000000000001.jpg',
     uploaded_by: user.id,
   }).select('id').single();
 

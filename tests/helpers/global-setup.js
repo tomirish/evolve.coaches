@@ -3,8 +3,21 @@
  * Runs before any tests. The web server is already up at this point.
  */
 const { chromium } = require('@playwright/test');
+const { createClient } = require('@supabase/supabase-js');
 const path = require('path');
 const fs   = require('fs');
+
+const SUPABASE_URL      = 'https://rmgernpifsdqnnomlzvg.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_rE93pQq6GtKA3Z2-3uOcSw_As3GUfz6';
+
+async function cleanupStaleFixtures() {
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  await client.auth.signInWithPassword({
+    email:    process.env.COACH_EMAIL,
+    password: process.env.COACH_PASSWORD,
+  });
+  await client.from('movements').delete().like('name', '__%__%');
+}
 
 const AUTH_DIR  = path.join(__dirname, '.auth');
 const BASE_URL  = 'http://localhost:8080';
@@ -25,6 +38,8 @@ async function saveAuth(browser, email, password, filename) {
 
 module.exports = async function globalSetup() {
   fs.mkdirSync(AUTH_DIR, { recursive: true });
+
+  await cleanupStaleFixtures();
 
   const browser = await chromium.launch();
   await saveAuth(browser, process.env.COACH_EMAIL, process.env.COACH_PASSWORD, 'coach.json');

@@ -40,14 +40,13 @@ async function initNav() {
   const isAdmin   = profile.role === 'admin';
   const adminItem = isAdmin ? '<a href="admin.html">Admin</a>' : '';
   const initials  = getInitials(profile.full_name);
-  const fullName  = escape(profile.full_name);
 
   const signOutBtn = document.querySelector('.nav-signout');
   if (signOutBtn) {
     const wrapper = document.createElement('div');
     wrapper.className = 'nav-user';
     wrapper.innerHTML = `
-      <button class="nav-avatar" title="${fullName}">${initials}</button>
+      <button class="nav-avatar"></button>
       <div class="nav-user-menu hidden">
         <a href="tags.html">Tags</a>
         ${adminItem}
@@ -55,6 +54,9 @@ async function initNav() {
         <button class="nav-user-signout">Sign Out</button>
       </div>
     `;
+    const avatarBtn = wrapper.querySelector('.nav-avatar');
+    avatarBtn.title       = profile.full_name || '';
+    avatarBtn.textContent = initials;
     signOutBtn.parentNode.replaceChild(wrapper, signOutBtn);
 
     const moreBtn = wrapper.querySelector('.nav-avatar');

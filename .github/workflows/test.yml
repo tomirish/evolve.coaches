@@ -58,7 +58,6 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
-      workflows: write
 
     steps:
       - uses: actions/checkout@v6

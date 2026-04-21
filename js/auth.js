@@ -40,7 +40,7 @@ async function initNav() {
   const isAdmin   = profile.role === 'admin';
   const adminItem = isAdmin ? '<a href="admin.html">Admin</a>' : '';
   const initials  = getInitials(profile.full_name);
-  const fullName  = (profile.full_name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const fullName  = escape(profile.full_name);
 
   const signOutBtn = document.querySelector('.nav-signout');
   if (signOutBtn) {

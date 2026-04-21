@@ -128,31 +128,18 @@ tagList.addEventListener('click', async (e) => {
   saveBtn.textContent = 'Saving…';
   errorMsg.classList.add('hidden');
 
-  // Update tag name in tags table
-  const { error: tagError } = await client
-    .from('tags')
-    .update({ name: newName })
-    .eq('id', id);
+  const { error: renameError } = await client.rpc('rename_tag', {
+    p_tag_id:   id,
+    p_old_name: oldName,
+    p_new_name: newName,
+  });
 
-  if (tagError) {
+  if (renameError) {
     errorMsg.textContent = 'Failed to rename. Please try again.';
     errorMsg.classList.remove('hidden');
     saveBtn.disabled    = false;
     saveBtn.textContent = 'Save';
     return;
-  }
-
-  // Update all movements that use the old tag name
-  const { data: movements } = await client
-    .from('movements')
-    .select('id, tags')
-    .contains('tags', [oldName]);
-
-  for (const m of movements || []) {
-    await client
-      .from('movements')
-      .update({ tags: m.tags.map(t => t === oldName ? newName : t) })
-      .eq('id', m.id);
   }
 
   loadTags();

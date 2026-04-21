@@ -19,6 +19,9 @@ test.describe('Movement detail page', () => {
   test.describe.configure({ retries: 2 });
 
   test.beforeEach(async ({ page }) => {
+    await page.route('**/functions/v1/r2-signed-url', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) })
+    );
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto('/catalog.html');
     await page.waitForSelector('.movement-card');
@@ -52,6 +55,9 @@ test.describe('Movement detail page — image', () => {
   });
 
   test('image movement shows img element not video', async ({ page }) => {
+    await page.route('**/functions/v1/r2-signed-url', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) })
+    );
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto(`/movement.html?id=${imageFixture.id}`);
 
@@ -60,6 +66,9 @@ test.describe('Movement detail page — image', () => {
   });
 
   test('image movement edit button shows the edit form', async ({ page }) => {
+    await page.route('**/functions/v1/r2-signed-url', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) })
+    );
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto(`/movement.html?id=${imageFixture.id}`);
 
@@ -69,6 +78,9 @@ test.describe('Movement detail page — image', () => {
   });
 
   test('image movement edit mode shows Replace File heading', async ({ page }) => {
+    await page.route('**/functions/v1/r2-signed-url', route =>
+      route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) })
+    );
     await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
     await page.goto(`/movement.html?id=${imageFixture.id}`);
 

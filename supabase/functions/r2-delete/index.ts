@@ -53,9 +53,9 @@ Deno.serve(async (req: Request) => {
     });
   }
 
-  const { path } = await req.json();
-  if (!path) {
-    return new Response(JSON.stringify({ error: "path required" }), {
+  const { path, movementId } = await req.json();
+  if (!path || !movementId) {
+    return new Response(JSON.stringify({ error: "path and movementId required" }), {
       status: 400,
       headers: { ...CORS, "Content-Type": "application/json" },
     });
@@ -66,6 +66,34 @@ Deno.serve(async (req: Request) => {
       status: 400,
       headers: { ...CORS, "Content-Type": "application/json" },
     });
+  }
+
+  const { data: movement, error: movementError } = await supabase
+    .from("movements")
+    .select("uploaded_by")
+    .eq("id", movementId)
+    .single();
+
+  if (movementError || !movement) {
+    return new Response(JSON.stringify({ error: "Not found" }), {
+      status: 404,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
+  if (movement.uploaded_by !== user.id) {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("role")
+      .eq("id", user.id)
+      .single();
+
+    if (!profile || profile.role !== "admin") {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...CORS, "Content-Type": "application/json" },
+      });
+    }
   }
 
   await r2.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: path }));

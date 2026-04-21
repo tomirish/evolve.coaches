@@ -346,7 +346,7 @@ async function replaceVideo() {
     .eq('id', id);
 
   if (dbError) {
-    await callEdgeFunction('r2-delete', { path: filename });
+    await callEdgeFunction('r2-delete', { path: filename, movementId: id });
     replaceError.textContent = 'Failed to save. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
@@ -356,7 +356,7 @@ async function replaceVideo() {
     return;
   }
 
-  const { error: oldFileError } = await callEdgeFunction('r2-delete', { path: oldPath });
+  const { error: oldFileError } = await callEdgeFunction('r2-delete', { path: oldPath, movementId: id });
   // Old file delete failure is non-fatal — orphaned file is invisible to coaches
   movement.video_path = filename;
 

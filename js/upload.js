@@ -327,7 +327,6 @@ form.addEventListener('submit', async (e) => {
   });
 
   if (dbError) {
-    await callEdgeFunction('r2-delete', { path: filename });
     showSingleError('Failed to save movement. Please try again.');
     resetSingleUI();
     return;
@@ -530,7 +529,6 @@ async function uploadAll() {
     });
 
     if (dbError) {
-      await callEdgeFunction('r2-delete', { path: filename });
       item.status   = 'error';
       item.errorMsg = 'Failed to save';
       updateBulkRow(item.id);

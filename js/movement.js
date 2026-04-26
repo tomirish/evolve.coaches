@@ -36,6 +36,11 @@ async function load() {
     } catch {}
   }
 
+  if (!movement.video_path) {
+    contentEl.innerHTML = '<p class="status-msg error">Movement has no media file.</p>';
+    return;
+  }
+
   const [signedResult, uploaderResult] = await Promise.all([
     signedUrl ? Promise.resolve({ signedUrl }) : callEdgeFunction('r2-signed-url', { path: movement.video_path }),
     client.from('profiles').select('full_name').eq('id', movement.uploaded_by).single()

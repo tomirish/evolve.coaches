@@ -68,7 +68,7 @@ function validateFile(file) {
       const timer   = setTimeout(() => { cleanup(); resolve({ ok: true }); }, 8000);
       video.addEventListener('loadedmetadata', () => { clearTimeout(timer); cleanup(); resolve({ ok: true }); });
       video.addEventListener('error',          () => { clearTimeout(timer); cleanup(); resolve({ ok: false, error: 'This video couldn\'t be opened. The file may be corrupt — try a different file or export it as MP4.' }); });
-      video.src = url.startsWith('blob:') ? url : ''; // lgtm[js/xss-through-dom]
+      const safeUrl = new URL(url); video.src = safeUrl.protocol === 'blob:' ? safeUrl.href : '';
     }
   });
 }
@@ -125,7 +125,7 @@ function openVideoModal(file) {
   if (modalObjectUrl) URL.revokeObjectURL(modalObjectUrl);
   modalObjectUrl = URL.createObjectURL(file);
   const video = document.getElementById('modal-video');
-  video.src = modalObjectUrl.startsWith('blob:') ? modalObjectUrl : ''; // lgtm[js/xss-through-dom]
+  const safeVideoUrl = new URL(modalObjectUrl); video.src = safeVideoUrl.protocol === 'blob:' ? safeVideoUrl.href : '';
   video.classList.remove('hidden');
   video.muted = true;
   video.play();
@@ -150,7 +150,7 @@ function openImageModal(file) {
     img.style.cssText = 'max-width:100%;max-height:80vh;display:block;';
     document.querySelector('#video-modal .modal-box').appendChild(img);
   }
-  img.src = modalObjectUrl.startsWith('blob:') ? modalObjectUrl : ''; // lgtm[js/xss-through-dom]
+  const safeImgUrl = new URL(modalObjectUrl); img.src = safeImgUrl.protocol === 'blob:' ? safeImgUrl.href : '';
   img.classList.remove('hidden');
   const modal = document.getElementById('video-modal');
   modal.classList.remove('hidden');
@@ -901,7 +901,7 @@ function extractVideoFrameWithDataUrl(file) {
     video.muted       = true;
     video.playsInline = true;
     video.preload     = 'auto';
-    video.src         = url.startsWith('blob:') ? url : ''; // lgtm[js/xss-through-dom]
+    const safeUrl = new URL(url); video.src = safeUrl.protocol === 'blob:' ? safeUrl.href : '';
   });
 }
 

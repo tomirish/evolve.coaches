@@ -1,0 +1,20 @@
+{
+  "name": "Evolve Coaches Video Library",
+  "short_name": "Evolve Coaches",
+  "start_url": "/catalog.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}

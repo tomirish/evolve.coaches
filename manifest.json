@@ -1,7 +1,7 @@
 {
   "name": "Evolve Coaches Video Library",
   "short_name": "Evolve Coaches",
-  "start_url": "/catalog.html",
+  "start_url": "./catalog.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",

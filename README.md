@@ -1,6 +1,6 @@
 # Evolve Coaches Video Library
 
-[![Live Site](https://img.shields.io/website?url=https%3A%2F%2Ftomirish.github.io%2Fevolve.coaches&label=evolve.coaches&logo=github&labelColor=343B42&logoColor=white)](https://tomirish.github.io/evolve.coaches/)
+[![Live Site](https://img.shields.io/website?url=https%3A%2F%2Ftomirish.github.io%2Fevolve.coaches&label=evolve.coaches&logo=github&labelColor=343B42)](https://tomirish.github.io/evolve.coaches/)
 [![Test & Deploy](https://github.com/tomirish/evolve.coaches/actions/workflows/test.yml/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/test.yml)
 [![CodeQL](https://github.com/tomirish/evolve.coaches/actions/workflows/codeql.yml/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/codeql.yml)
 [![pages-build-deployment](https://github.com/tomirish/evolve.coaches/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/pages/pages-build-deployment)

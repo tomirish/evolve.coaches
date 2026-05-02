@@ -4,6 +4,7 @@
 [![Live Site](https://img.shields.io/badge/Site-evolve.coaches-green)](https://tomirish.github.io/evolve.coaches/)
 [![GitHub Pages](https://img.shields.io/badge/Host-GitHub_Pages-222)](https://pages.github.com)
 [![Tests](https://github.com/tomirish/evolve.coaches/actions/workflows/test.yml/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/test.yml)
+[![pages-build-deployment](https://github.com/tomirish/evolve.coaches/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/pages/pages-build-deployment)
 
 **Code:**
 [![HTML](https://img.shields.io/badge/HTML-E34F26?logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)

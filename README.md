@@ -1,10 +1,9 @@
 # Evolve Coaches Video Library
 
-[![Live Site](https://img.shields.io/website?url=https%3A%2F%2Ftomirish.github.io%2Fevolve.coaches&label=evolve.coaches&logo=github&labelColor=343B42&logoColor=959DA5)](https://tomirish.github.io/evolve.coaches/)
+[![Live Site](https://img.shields.io/website?url=https%3A%2F%2Ftomirish.github.io%2Fevolve.coaches&label=evolve.coaches&logo=github&labelColor=343B42&logoColor=959DA5&up_color=2EBC4F)](https://tomirish.github.io/evolve.coaches/)
 [![Test & Deploy](https://github.com/tomirish/evolve.coaches/actions/workflows/test.yml/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/test.yml)
 [![CodeQL](https://github.com/tomirish/evolve.coaches/actions/workflows/codeql.yml/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/codeql.yml)
 [![Dependabot Updates](https://github.com/tomirish/evolve.coaches/actions/workflows/dependabot/dependabot-updates/badge.svg?branch=develop)](https://github.com/tomirish/evolve.coaches/actions/workflows/dependabot/dependabot-updates)
-[![Dependabot auto-merge](https://github.com/tomirish/evolve.coaches/actions/workflows/dependabot-auto-merge.yml/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/dependabot-auto-merge.yml)
 [![pages-build-deployment](https://github.com/tomirish/evolve.coaches/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/tomirish/evolve.coaches/actions/workflows/pages/pages-build-deployment)
 
 A private video library for coaches at [Evolve Strong Fitness](https://evolvestrongfitness.com). Coaches can upload training movement videos, tag them with metadata, and browse the catalog before sessions.

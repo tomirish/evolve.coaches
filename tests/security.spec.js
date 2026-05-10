@@ -72,4 +72,25 @@ test.describe('Edge Function security boundaries', () => {
     });
     expect(res.status()).toBe(403);
   });
+
+  // Regression: vision-name must be deployed with --no-verify-jwt.
+  // Supabase's gateway rejects ES256 JWTs with 401 before the function runs
+  // when verify_jwt: true (the default). A 400 here proves the function ran.
+  test('unauthenticated request to vision-name is rejected', async ({ request }) => {
+    const res = await request.post(`${EDGE_BASE}/vision-name`, {
+      headers: { 'Content-Type': 'application/json' },
+      data: {},
+    });
+    expect(res.status()).toBe(401);
+  });
+
+  test('authenticated coach reaches vision-name (verify_jwt deployment check)', async ({ request }) => {
+    const res = await request.post(`${EDGE_BASE}/vision-name`, {
+      headers: { Authorization: `Bearer ${coachToken}`, 'Content-Type': 'application/json' },
+      data: {},
+    });
+    // 400 = function ran and rejected missing image input.
+    // 401 = gateway rejected the JWT before the function ran (missing --no-verify-jwt).
+    expect(res.status()).toBe(400);
+  });
 });

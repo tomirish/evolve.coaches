@@ -23,7 +23,7 @@ A private video library for coaches at [Evolve Strong Fitness](https://evolvestr
 ## Development
 
 ### Prerequisites
-- [1Password CLI](https://developer.1password.com/docs/cli/) — credentials are stored in a 1Password vault, not `.env` files
+- 1Password CLI — credentials are stored in a 1Password vault, not `.env` files
 - Node.js
 - Python 3 — used as the local HTTP server during tests
 

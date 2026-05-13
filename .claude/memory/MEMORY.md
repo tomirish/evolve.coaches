@@ -6,9 +6,7 @@
 - Branch strategy: feature work on `develop` — pushing to `develop` auto-merges to `main` via CI (deploy.yml triggers on test success). Never offer to manually merge; a push to `develop` IS the deploy.
 
 ## Key accounts
-- Admin: tom@tom.irish (production admin)
-- Test admin: admin@tom.irish
-- Test coach: coach@tom.irish
+- accounts located in password vault.
 
 ## Testing
 - Playwright E2E suite (`npm test`) — 65 tests, 65 passing

@@ -4,6 +4,10 @@
 - Vanilla HTML/CSS/JS frontend hosted on GitHub Pages
 - Supabase for auth, DB, and storage
 - Branch strategy: feature work on `develop` — pushing to `develop` auto-merges to `main` via CI (deploy.yml triggers on test success). Never offer to manually merge; a push to `develop` IS the deploy.
+- `develop` has branch protection — direct pushes are blocked. Always merge via PR.
+
+## .claude/ is public
+This repo is public. All files in `.claude/` are committed and visible to anyone. Never put credentials, project IDs, vault names, local paths, or internal URLs here. If something shouldn't be public, create a `.local.` file instead (e.g. `notes.local.md`) — the `.gitignore` pattern `.claude/*.local.*` will keep it out of the repo.
 
 ## Key accounts
 - accounts located in password vault.
@@ -16,12 +20,11 @@
 - `desktop.spec.js` — 9 tests: brand name visible, row layout via `isInRowWith()`, no horizontal scroll at 1280px
 - `workers: 2` in playwright.config.js — parallel runs, low risk of Supabase auth rate limits at 39 tests
 - Credentials injected via 1Password CLI (`op run --env-file=.env.op`)
-- 1Password vault: `GitHub.evolve.coaches` — items: Test Admin, Test Coach, Supabase API, Cloudflare R2 API, Anthropic API
+- Credentials are in the password vault
 - Web server: `python3 -m http.server 8080` (auto-started by Playwright)
 - `npm run test:ui` for headed/interactive mode
 - Run tests without `run_in_background` so output streams live to the terminal
-- Node.js installed via Homebrew (`/opt/homebrew/bin/node`); PATH needs export
-- `OP_SERVICE_ACCOUNT_TOKEN` is in `~/.zshrc` but Claude Code bash sessions don't source it automatically — always run `source ~/.zshrc && npm test`
+- Claude Code bash sessions don't source shell config automatically — always run `source ~/.zshrc && npm test`
 
 ## CI/CD
 - GitHub Actions: `.github/workflows/test.yml` — triggers on push to `develop`
@@ -39,7 +42,7 @@
 - Local `npm test` optional — run locally only for big/risky changes
 
 ## Bulk upload / Vision OCR
-- Full spec in `docs/bulk-upload.md` — see `~/GitHub/claude/evolve-coaches.todo.md` for open items
+- Full spec in `docs/bulk-upload.md`
 
 ## Important selectors (verified against live code)
 - Login: `#email`, `#password`, `#login-btn`, `#error-msg`

@@ -16,11 +16,10 @@
 - `desktop.spec.js` — 9 tests: brand name visible, row layout via `isInRowWith()`, no horizontal scroll at 1280px
 - `workers: 2` in playwright.config.js — parallel runs, low risk of Supabase auth rate limits at 39 tests
 - Credentials injected via 1Password CLI (`op run --env-file=.env.op`)
-- 1Password vault: `GitHub.evolve.coaches` — items: Test Admin, Test Coach, Supabase API, Cloudflare R2 API, Anthropic API
+- Credentials are in the password vault
 - Web server: `python3 -m http.server 8080` (auto-started by Playwright)
 - `npm run test:ui` for headed/interactive mode
 - Run tests without `run_in_background` so output streams live to the terminal
-- Node.js installed via Homebrew (`/opt/homebrew/bin/node`); PATH needs export
 - `OP_SERVICE_ACCOUNT_TOKEN` is in `~/.zshrc` but Claude Code bash sessions don't source it automatically — always run `source ~/.zshrc && npm test`
 
 ## CI/CD
@@ -39,7 +38,7 @@
 - Local `npm test` optional — run locally only for big/risky changes
 
 ## Bulk upload / Vision OCR
-- Full spec in `docs/bulk-upload.md` — see `~/GitHub/claude/evolve-coaches.todo.md` for open items
+- Full spec in `docs/bulk-upload.md`
 
 ## Important selectors (verified against live code)
 - Login: `#email`, `#password`, `#login-btn`, `#error-msg`

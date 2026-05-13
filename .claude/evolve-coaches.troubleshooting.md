@@ -75,7 +75,8 @@ If you ever need to manually browse R2 files: Cloudflare dashboard → R2 → ev
 
 ## Supabase Quick Links
 
-- [SQL Editor](https://supabase.com/dashboard/project/rmgernpifsdqnnomlzvg/sql/new)
-- [movements table](https://supabase.com/dashboard/project/rmgernpifsdqnnomlzvg/editor) — filter by table
-- [Auth users](https://supabase.com/dashboard/project/rmgernpifsdqnnomlzvg/auth/users)
-- [Edge Functions logs](https://supabase.com/dashboard/project/rmgernpifsdqnnomlzvg/functions)
+Project URL and credentials are in the password vault. From the Supabase dashboard, navigate to your project and use:
+- **SQL Editor** — for running the queries above
+- **Table Editor** → movements — for browsing rows
+- **Authentication** → Users — for managing auth users
+- **Edge Functions** — for function logs

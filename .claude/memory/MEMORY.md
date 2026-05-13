@@ -4,6 +4,7 @@
 - Vanilla HTML/CSS/JS frontend hosted on GitHub Pages
 - Supabase for auth, DB, and storage
 - Branch strategy: feature work on `develop` — pushing to `develop` auto-merges to `main` via CI (deploy.yml triggers on test success). Never offer to manually merge; a push to `develop` IS the deploy.
+- `develop` has branch protection — direct pushes are blocked. Always merge via PR.
 
 ## .claude/ is public
 This repo is public. All files in `.claude/` are committed and visible to anyone. Never put credentials, project IDs, vault names, local paths, or internal URLs here. If something shouldn't be public, create a `.local.` file instead (e.g. `notes.local.md`) — the `.gitignore` pattern `.claude/*.local.*` will keep it out of the repo.

@@ -23,7 +23,7 @@ This repo is public. All files in `.claude/` are committed and visible to anyone
 - Web server: `python3 -m http.server 8080` (auto-started by Playwright)
 - `npm run test:ui` for headed/interactive mode
 - Run tests without `run_in_background` so output streams live to the terminal
-- `OP_SERVICE_ACCOUNT_TOKEN` is in `~/.zshrc` but Claude Code bash sessions don't source it automatically — always run `source ~/.zshrc && npm test`
+- Claude Code bash sessions don't source shell config automatically — always run `source ~/.zshrc && npm test`
 
 ## CI/CD
 - GitHub Actions: `.github/workflows/test.yml` — triggers on push to `develop`

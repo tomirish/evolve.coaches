@@ -1,5 +1,7 @@
 CLAUDE.md
 .claude/worktrees/
+.claude/*.local.*
+.claude/**/*.local.*
 .DS_Store
 .env
 .env.*.local

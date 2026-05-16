@@ -3,8 +3,9 @@
 ## Project
 - Vanilla HTML/CSS/JS frontend hosted on GitHub Pages
 - Supabase for auth, DB, and storage
-- Branch strategy: feature work on `develop` — pushing to `develop` auto-merges to `main` via CI (deploy.yml triggers on test success). Never offer to manually merge; a push to `develop` IS the deploy.
-- `develop` has branch protection — direct pushes are blocked. Always merge via PR.
+- Branch strategy: push directly to `develop` — CI runs tests and auto-merges to `main` on success. A push to `develop` IS the deploy.
+- `develop` has no branch protection — direct pushes are allowed. No PR required.
+- `main` has branch protection — force pushes blocked. Never push to main directly.
 
 ## .claude/ is public
 This repo is public. All files in `.claude/` are committed and visible to anyone. Never put credentials, project IDs, vault names, local paths, or internal URLs here. If something shouldn't be public, create a `.local.` file instead (e.g. `notes.local.md`) — the `.gitignore` pattern `.claude/*.local.*` will keep it out of the repo.
@@ -13,7 +14,7 @@ This repo is public. All files in `.claude/` are committed and visible to anyone
 - accounts located in password vault.
 
 ## Testing
-- Playwright E2E suite (`npm test`) — 65 tests, 65 passing
+- Playwright E2E suite (`npm test`) — 76 tests, 76 passing
 - Test files: auth, admin, catalog, nav, movement, upload, mobile (390px), desktop (1280px), security
 - performance.spec.js deleted — was measuring CI runner latency, not real coach experience
 - `mobile.spec.js` — 9 tests: element widths, no horizontal scroll, mobile CSS at 390px

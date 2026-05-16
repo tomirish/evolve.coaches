@@ -1,8 +1,7 @@
 const { test, expect } = require('@playwright/test');
 const { createClient } = require('@supabase/supabase-js');
 
-const SUPABASE_URL      = 'https://rmgernpifsdqnnomlzvg.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_rE93pQq6GtKA3Z2-3uOcSw_As3GUfz6';
+const { SUPABASE_URL, SUPABASE_ANON_KEY } = require('./helpers/config');
 const EDGE_BASE         = `${SUPABASE_URL}/functions/v1`;
 
 const COACH_EMAIL    = process.env.COACH_EMAIL;

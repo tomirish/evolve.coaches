@@ -2,6 +2,8 @@
 
 ## Open
 
+- **[Low pri] Rename 1Password vault `GitHub.evolve.coaches` → `github.evolve.coaches`** — vault name uses uppercase; rename to lowercase to match the repo naming convention.
+
 ## Done
 
 - Centralize Supabase URL — created `tests/helpers/config.js`; `global-setup.js`, `fixtures.js`, and `security.spec.js` now import from it.

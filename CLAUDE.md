@@ -93,7 +93,8 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 ### CI/CD
 - **Single workflow** — `test.yml` handles both testing and deploy. No separate deploy.yml. Deploy job uses `needs: test` + `if: github.ref == 'refs/heads/develop'` so it skips on PRs automatically and merges develop → main via ff-only on success.
 - **`workflow_run` triggers only fire from the default branch (main)** — don't put `workflow_run` workflows on develop; they're dead code there and cause spurious "workflow file issue" failures on every push.
-- **Validate workflow files locally with `actionlint`** (`brew install actionlint`) before pushing — catches schema errors GitHub won't explain. `workflows` is NOT a valid permission scope; valid scopes include `contents`, `actions`, `checks`, `id-token`, `pages`, `pull-requests`, `security-events`.
+- **Validate workflow files locally with `actionlint`** (`brew install actionlint`) before pushing — catches schema errors GitHub won't explain. `workflows` is NOT a valid GITHUB_TOKEN permission scope; valid scopes include `contents`, `actions`, `checks`, `id-token`, `pages`, `pull-requests`, `security-events`. (`workflow` scope only exists for classic PATs, not for the `permissions:` block in workflow YAML.)
+- **Pushing workflow files from CI requires a PAT** — GITHUB_TOKEN can never push changes to `.github/workflows/`. The deploy job uses a `GH_DEPLOY_TOKEN` secret (fine-grained PAT with `contents: write` + `workflows` on this repo) and pushes via `https://x-access-token:${GH_DEPLOY_TOKEN}@github.com/...` instead of `git push origin main`.
 
 ### Automated scanning
 - **CodeQL** (`.github/workflows/codeql.yml`) — static analysis of JavaScript; runs on every push to main/develop and weekly on Saturdays. Results in GitHub Security → Code scanning alerts. Does not block pushes.

@@ -62,7 +62,6 @@ jobs:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     permissions:
       contents: write
-      workflows: write
 
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # @v6.0.3
@@ -70,10 +69,12 @@ jobs:
           fetch-depth: 0
 
       - name: Merge to main
+        env:
+          GH_DEPLOY_TOKEN: ${{ secrets.GH_DEPLOY_TOKEN }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin main
           git checkout main
           git merge --ff-only ${{ github.sha }}
-          git push origin main
+          git push "https://x-access-token:${GH_DEPLOY_TOKEN}@github.com/${{ github.repository }}.git" main

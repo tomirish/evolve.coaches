@@ -345,13 +345,16 @@ async function replaceVideo() {
 
   const oldPath = movement.video_path;
 
+  // Delete old file before updating DB so the path check in r2-delete passes.
+  // Non-fatal — if it fails, the orphan becomes inaccessible once the DB points to the new file.
+  await callEdgeFunction('r2-delete', { path: oldPath, movementId: id });
+
   const { error: dbError } = await client
     .from('movements')
     .update({ video_path: filename })
     .eq('id', id);
 
   if (dbError) {
-    await callEdgeFunction('r2-delete', { path: filename, movementId: id });
     replaceError.textContent = 'Failed to save. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
@@ -361,8 +364,6 @@ async function replaceVideo() {
     return;
   }
 
-  const { error: oldFileError } = await callEdgeFunction('r2-delete', { path: oldPath, movementId: id });
-  // Old file delete failure is non-fatal — orphaned file is invisible to coaches
   movement.video_path = filename;
 
   const signed = await callEdgeFunction('r2-signed-url', { path: movement.video_path });

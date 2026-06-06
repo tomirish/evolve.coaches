@@ -48,6 +48,16 @@ test.describe('Edge Function security boundaries', () => {
     expect(res.status()).toBe(403);
   });
 
+  test('r2-delete rejects path that does not match the movement video_path', async ({ request }) => {
+    // adminMovementId has video_path 00000000-0000-0000-0000-000000000002.mp4.
+    // Path mismatch check fires before ownership check, so 400 regardless of who calls it.
+    const res = await request.post(`${EDGE_BASE}/r2-delete`, {
+      headers: { Authorization: `Bearer ${coachToken}`, 'Content-Type': 'application/json' },
+      data: { path: '00000000-0000-0000-0000-000000000099.mp4', movementId: adminMovementId },
+    });
+    expect(res.status()).toBe(400);
+  });
+
   test('coach cannot list users', async ({ request }) => {
     const res = await request.post(`${EDGE_BASE}/list-users`, {
       headers: { Authorization: `Bearer ${coachToken}`, 'Content-Type': 'application/json' },

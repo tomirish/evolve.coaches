@@ -70,13 +70,20 @@ Deno.serve(async (req: Request) => {
 
   const { data: movement, error: movementError } = await supabase
     .from("movements")
-    .select("uploaded_by")
+    .select("uploaded_by, video_path")
     .eq("id", movementId)
     .single();
 
   if (movementError || !movement) {
     return new Response(JSON.stringify({ error: "Not found" }), {
       status: 404,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
+  if (path !== movement.video_path) {
+    return new Response(JSON.stringify({ error: "Path does not match movement" }), {
+      status: 400,
       headers: { ...CORS, "Content-Type": "application/json" },
     });
   }

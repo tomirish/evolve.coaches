@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-const allowedOrigins = ['https://tomirish.github.io']
+const allowedOrigins = ['https://tomirish.github.io', 'http://localhost:8080']
 
 function corsHeaders(req: Request) {
   const origin = req.headers.get('Origin') ?? ''

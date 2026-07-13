@@ -20,6 +20,6 @@
   "homepage": "https://github.com/tomirish/evolve.coaches#readme",
   "devDependencies": {
     "@playwright/test": "^1.61.1",
-    "@supabase/supabase-js": "^2.110.0"
+    "@supabase/supabase-js": "^2.110.3"
   }
 }

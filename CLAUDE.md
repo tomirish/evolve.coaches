@@ -2,7 +2,7 @@
 
 ## Session start
 When working in this repo, the global MEMORY.md is not auto-loaded. Read it manually at the start of each session:
-`~/.claude/projects/-Users-tom-GitHub/memory/MEMORY.md`
+`~/.claude/projects/-Users-tom-github/memory/MEMORY.md`
 Then read any topic files referenced in it — they contain important context.
 
 ---

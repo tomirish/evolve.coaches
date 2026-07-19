@@ -7,6 +7,14 @@ Then read any topic files referenced in it — they contain important context.
 
 ---
 
+## Specs and plans
+
+Design specs go in `docs/superpowers/specs/`, implementation plans in `docs/superpowers/plans/`. Committed to the repo, not gitignored. Same convention in every repo.
+
+Specs are the *why* and are kept. Plans are the *how, once* — prune them once implemented; the code plus the commit message is the durable record.
+
+---
+
 ## Project Overview
 A private internal video index for coaches at Evolve Strong Fitness. Coaches log in, browse training movements, watch video demos, and view/edit metadata. Built for ~8 coaches + 1 admin. Non-technical users — must be user-friendly and clean.
 

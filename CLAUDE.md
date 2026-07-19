@@ -108,11 +108,14 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 
 ### CI/CD
 - **Single workflow** — `test.yml` handles both testing and deploy. No separate deploy.yml. Deploy job uses `needs: test` + `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`, uploads the repo as a Pages artifact, and publishes via `actions/deploy-pages`. Pages source is "GitHub Actions" (workflow mode), not branch-based — do not flip it back.
-- **`workflow_run` triggers only fire from the default branch (main)** — don't put `workflow_run` workflows on develop; they're dead code there and cause spurious "workflow file issue" failures on every push.
+- **`workflow_run` triggers only fire from the default branch (main)** — on any other branch they're dead code and cause spurious "workflow file issue" failures on every push.
 - **Validate workflow files locally with `actionlint`** (`brew install actionlint`) before pushing — catches schema errors GitHub won't explain. `workflows` is NOT a valid GITHUB_TOKEN permission scope; valid scopes include `contents`, `actions`, `checks`, `id-token`, `pages`, `pull-requests`, `security-events`. (`workflow` scope only exists for classic PATs, not for the `permissions:` block in workflow YAML.)
+- **Rapid successive pushes**: an older run may end "cancelled" — its queued deploy was superseded by the newer commit's (deploy concurrency group). Expected, not a failure; the newest green deploy contains everything.
+- **Editing `.github/dependabot.yml` triggers an immediate Dependabot run** — regenerated/grouped PRs appear within minutes, not at the Monday schedule.
+- **Dependabot PRs are squash-merged** (`gh pr merge --squash`), matching history style.
 
 ### Automated scanning
-- **CodeQL** (`.github/workflows/codeql.yml`) — static analysis of JavaScript; runs on every push to main/develop and weekly on Saturdays. Results in GitHub Security → Code scanning alerts. Does not block pushes.
+- **CodeQL** (`.github/workflows/codeql.yml`) — static analysis of JavaScript; runs on every push to main and weekly on Saturdays. Results in GitHub Security → Code scanning alerts. Does not block pushes.
 - **Dependabot** (`.github/dependabot.yml`) — opens PRs weekly (Mondays) for outdated GitHub Actions and npm dependencies. No `target-branch` — PRs target `main`, where the `pull_request` trigger tests them without deploying.
 
 ### Auth/ownership checklist
@@ -140,6 +143,9 @@ Run through the auth/ownership checklist above for every new or modified Edge Fu
 - `pages-build-deployment` is a GitHub system workflow that only runs for branch-based Pages deploys — it stopped firing when we switched to workflow mode; ignore it in the Actions list
 - `gh api --field` doesn't work for nested JSON (branch protection, security_and_analysis) — use `--input -` with a heredoc instead
 - Secret scanning extras (non-provider patterns, validity checks) cannot be set via API on public repos — Settings → Advanced Security in the web UI
+- Live site health check: `curl -sI https://tomirish.github.io/evolve.coaches/` → expect `HTTP/2 200`
+- `gh run watch --exit-status` can return nonzero spuriously — confirm with `gh run view --json conclusion` before treating a run as failed
+- A repo-scoped GitHub PAT exists for pushes and API calls on this repo (plain `gh` uses the broader dev.tools token, which lacks admin scopes) — location and usage pattern are in Claude's project memory, not here (public repo)
 
 ## Local development setup
 

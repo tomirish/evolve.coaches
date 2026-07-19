@@ -15,6 +15,14 @@ Specs are the *why* and are kept. Plans are the *how, once* — prune them once 
 
 ---
 
+## Branching
+
+**`develop` is the working branch — commit and push there directly.** It promotes to `main` after passing the develop pipeline. Don't open a PR against `main`, and don't create a feature branch for ordinary work.
+
+`.github/workflows/test.yml` runs on pushes and PRs to `develop` — that's the gate. `codeql.yml` runs on both branches.
+
+---
+
 ## Project Overview
 A private internal video index for coaches at Evolve Strong Fitness. Coaches log in, browse training movements, watch video demos, and view/edit metadata. Built for ~8 coaches + 1 admin. Non-technical users — must be user-friendly and clean.
 

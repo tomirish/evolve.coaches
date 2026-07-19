@@ -136,7 +136,7 @@ Run through the auth/ownership checklist above for every new or modified Edge Fu
 ## GitHub / CI gotchas
 - `_headers` was deleted — Cloudflare/Netlify convention, does nothing on GitHub Pages
 - `favicon.ico` deleted — safe when all HTML pages have explicit `<link rel="icon">` tags
-- `main` is protected by a repo **ruleset** (deletion + force-push blocked), not classic branch protection, and has **no required status checks** — required checks would reject direct pushes, which is our whole workflow. Don't add them.
+- `main` is protected twice over: a repo **ruleset** and **classic branch protection**, each blocking deletion + force-push. The classic protection had a required status check (`test`) that was removed 2026-07 — required checks reject direct pushes, which is our whole workflow. Don't re-add them. (Classic protection is invisible to the API without an admin-scoped token — reads return 404, not 403.)
 - `pages-build-deployment` is a GitHub system workflow that only runs for branch-based Pages deploys — it stopped firing when we switched to workflow mode; ignore it in the Actions list
 - `gh api --field` doesn't work for nested JSON (branch protection, security_and_analysis) — use `--input -` with a heredoc instead
 - Secret scanning extras (non-provider patterns, validity checks) cannot be set via API on public repos — Settings → Advanced Security in the web UI

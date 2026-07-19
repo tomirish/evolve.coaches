@@ -17,9 +17,9 @@ Specs are the *why* and are kept. Plans are the *how, once* — prune them once 
 
 ## Branching
 
-**`develop` is the working branch — commit and push there directly.** It promotes to `main` after passing the develop pipeline. Don't open a PR against `main`, and don't create a feature branch for ordinary work.
+**`main` is the only branch — commit and push there directly.** Don't open PRs and don't create feature branches for ordinary work. There is no develop branch.
 
-`.github/workflows/test.yml` runs on pushes and PRs to `develop` — that's the gate. `codeql.yml` runs on both branches.
+`.github/workflows/test.yml` runs on every push to `main`: the `test` job runs the full Playwright suite, and the `deploy` job publishes to GitHub Pages (Actions deployment, not branch-based) only when tests pass. A broken commit lands in git history but never reaches the live site — it keeps serving the last green deploy. Fix forward.
 
 ---
 
@@ -79,7 +79,7 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 - **Video replacement order: upload → update DB → delete old** — if storage delete fails, the orphaned file is invisible to coaches. Reversing the order (delete old first) risks losing the video entirely if the upload fails.
 - **Every page JS must call `initNav()`** — the nav user dropdown is injected dynamically by `initNav()` in auth.js. Every page's JS file must call it at init time or the nav will be broken on that page. Current pages: catalog.js, movement.js, upload.js, account.js, admin.js, tags.js.
 - **Shared utilities live in auth.js** — `escape()` (HTML escaping), `callEdgeFunction()`, `uploadToR2()`, `getProfile()`, `requireAuth()`, `requireAdmin()`, and `initNav()` are all defined in auth.js and available on every page since it's loaded first. Do not add local copies to individual page scripts.
-- **Dev branch workflow** — `main` is always the live site (GitHub Pages). All feature work happens on `develop` and is merged to `main` only when stable and tested locally. Claude must always verify we are on `develop` before making any code changes, and must never commit or push to `main` directly.
+- **Single-branch workflow (replaced dev-branch workflow 2026-07)** — all work happens directly on `main`. GitHub Pages deploys via Actions (`actions/deploy-pages`), gated on the test job, so the live site only ever updates from a green pipeline. The old develop → ff-merge → main flow and its `GH_DEPLOY_TOKEN` PAT are gone.
 - **Resend for transactional email** — Supabase free tier is limited to 2 auth emails/hour. Resend handles invites and password resets via SMTP (smtp.resend.com:465). Domain `tom.irish` verified on Cloudflare with DKIM + SPF. App password stored in Supabase SMTP settings.
 - **Profiles SELECT policy allows all authenticated users** — updated from "own row only" to allow any logged-in coach to read any profile. Required for "Uploaded by" feature on movement detail page. No sensitive data in profiles (name + role only).
 - **Media type detection via `isImagePath(path)`** — shared browser global defined in auth.js. Returns true for jpg/jpeg/png/gif/webp/avif. Any code that branches on video vs image must use this — movement.js, upload.js, and admin.js all have branches. Do not add local copies.
@@ -95,10 +95,10 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 1. **Documentation stays current** — update READMEs and CLAUDE.md every time something significant changes. Claude should flag CLAUDE.md updates proactively during the session, not wait to be asked. Every session ends with a quick CLAUDE.md review before stopping.
 2. **Test before pushing** — fully test all changes locally before pushing to the repo.
 3. **One change at a time** — keep commits focused and scoped. Bundling unrelated changes makes rollbacks harder and history murkier.
-4. **Commit freely, speak up before pushing** — Commit locally as work completes. If Tom says to push and everything looks good, just push. If Tom says to push but I have concerns, say so before pushing. If I think we should push but Tom hasn't said so, ask first — CI auto-merges to main and pushes directly affect production.
+4. **Commit freely, speak up before pushing** — Commit locally as work completes. If Tom says to push and everything looks good, just push. If Tom says to push but I have concerns, say so before pushing. If I think we should push but Tom hasn't said so, ask first — a push to main deploys to production as soon as tests pass.
 5. **Agree on "done" before starting** — make sure we both know what the finished state looks like before writing any code.
 6. **Track decisions, not just code** — when we choose an approach (or rule one out), log the reasoning in CLAUDE.md so future-us understands why.
-7. **Main branch is always clean** — only stable, working code on `main`. Feature branches for anything in progress.
+7. **The live site is always clean** — deploys only happen from green pipelines. A broken commit on `main` is tolerable (the site keeps serving the last good deploy); fix forward promptly rather than rewriting history.
 8. **Verify before writing** — when working with schemas, APIs, or anything structural, query the actual state first using the Supabase MCP connector. Never guess at types, column names, or structure. Stop, inspect, then write the correct thing once. Use `mcp__supabase__list_tables` and `mcp__supabase__execute_sql` proactively — not just when something breaks.
 9. **UI should teach itself** — if a feature needs explanation, the UI isn't clear enough yet. Fix the label, placeholder, or layout before reaching for a tooltip or help page. A help page is an admission of a UX failure.
 10. **Simplicity is the goal, not a constraint** — always ask whether a feature can be simpler. The right amount of UI is the minimum a coach needs to succeed on their own.
@@ -107,14 +107,13 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 ## Security
 
 ### CI/CD
-- **Single workflow** — `test.yml` handles both testing and deploy. No separate deploy.yml. Deploy job uses `needs: test` + `if: github.ref == 'refs/heads/develop'` so it skips on PRs automatically and merges develop → main via ff-only on success.
+- **Single workflow** — `test.yml` handles both testing and deploy. No separate deploy.yml. Deploy job uses `needs: test` + `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`, uploads the repo as a Pages artifact, and publishes via `actions/deploy-pages`. Pages source is "GitHub Actions" (workflow mode), not branch-based — do not flip it back.
 - **`workflow_run` triggers only fire from the default branch (main)** — don't put `workflow_run` workflows on develop; they're dead code there and cause spurious "workflow file issue" failures on every push.
 - **Validate workflow files locally with `actionlint`** (`brew install actionlint`) before pushing — catches schema errors GitHub won't explain. `workflows` is NOT a valid GITHUB_TOKEN permission scope; valid scopes include `contents`, `actions`, `checks`, `id-token`, `pages`, `pull-requests`, `security-events`. (`workflow` scope only exists for classic PATs, not for the `permissions:` block in workflow YAML.)
-- **Pushing workflow files from CI requires a PAT** — GITHUB_TOKEN can never push changes to `.github/workflows/`. The deploy job uses a `GH_DEPLOY_TOKEN` secret (fine-grained PAT with `contents: write` + `workflows` on this repo) and pushes via `https://x-access-token:${GH_DEPLOY_TOKEN}@github.com/...` instead of `git push origin main`.
 
 ### Automated scanning
 - **CodeQL** (`.github/workflows/codeql.yml`) — static analysis of JavaScript; runs on every push to main/develop and weekly on Saturdays. Results in GitHub Security → Code scanning alerts. Does not block pushes.
-- **Dependabot** (`.github/dependabot.yml`) — opens PRs weekly (Mondays) for outdated GitHub Actions and npm dependencies. `target-branch: develop` set on both ecosystems.
+- **Dependabot** (`.github/dependabot.yml`) — opens PRs weekly (Mondays) for outdated GitHub Actions and npm dependencies. No `target-branch` — PRs target `main`, where the `pull_request` trigger tests them without deploying.
 
 ### Auth/ownership checklist
 When touching any code that handles auth, sessions, RLS policies, or Edge Functions, verify:
@@ -137,8 +136,8 @@ Run through the auth/ownership checklist above for every new or modified Edge Fu
 ## GitHub / CI gotchas
 - `_headers` was deleted — Cloudflare/Netlify convention, does nothing on GitHub Pages
 - `favicon.ico` deleted — safe when all HTML pages have explicit `<link rel="icon">` tags
-- Branch protection references the **job name** (`test`), not the workflow `name:` field — renaming the workflow title is safe; renaming the job key requires updating branch protection on both `main` and `develop`
-- `pages-build-deployment` is a GitHub system workflow — cannot be renamed, badge label is hardcoded
+- `main` is protected by a repo **ruleset** (deletion + force-push blocked), not classic branch protection, and has **no required status checks** — required checks would reject direct pushes, which is our whole workflow. Don't add them.
+- `pages-build-deployment` is a GitHub system workflow that only runs for branch-based Pages deploys — it stopped firing when we switched to workflow mode; ignore it in the Actions list
 - `gh api --field` doesn't work for nested JSON (branch protection, security_and_analysis) — use `--input -` with a heredoc instead
 - Secret scanning extras (non-provider patterns, validity checks) cannot be set via API on public repos — Settings → Advanced Security in the web UI
 

@@ -7,6 +7,12 @@ updates:
       interval: weekly
       day: monday
     labels: [dependencies]
+    # One PR for all action bumps — codeql-action pins init/analyze as two
+    # steps, and separate per-step PRs create a version mismatch CodeQL rejects
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: npm
     directory: /

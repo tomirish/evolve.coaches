@@ -3,6 +3,15 @@ name: Test & Deploy
 on:
   push:
     branches: [main]
+    # Docs-only pushes skip test+deploy. NARROW NAMED PATHS ONLY — push to
+    # main deploys Julie's app, and app-facing markdown must keep deploying;
+    # a '*.md' glob would silently skip real deploys. Skips only when EVERY
+    # changed file matches; a skipped docs push deploys nothing and the next
+    # code push carries it.
+    paths-ignore:
+      - 'todo.md'
+      - 'CLAUDE.md'
+      - 'docs/**'
   pull_request:
     branches: [main]
 

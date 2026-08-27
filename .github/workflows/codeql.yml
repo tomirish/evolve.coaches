@@ -3,6 +3,8 @@ name: CodeQL
 on:
   push:
     branches: [main]
+    # Same narrow docs-only skip as test.yml — named paths, never '*.md'.
+    paths-ignore: ['todo.md', 'CLAUDE.md', 'docs/**']
   pull_request:
     branches: [main]
   schedule:

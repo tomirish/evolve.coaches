@@ -24,35 +24,41 @@ async function load() {
   movement     = movementResult.data;
   muscleGroups = (groupsResult.data || []).map(g => g.name);
 
-  // Check cache before calling edge function (signed URLs last 24h)
-  const cacheKey = `signed-url:${movement.video_path}`;
-  const cached   = sessionStorage.getItem(cacheKey);
-  let signedUrl  = null;
+  // What plays: R2 file if there is one, else the pasted link's embed.
+  movement.link = movement.video_path ? null : parseVideoLink(movement.source_url);
 
-  if (cached) {
-    try {
-      const { url, expires } = JSON.parse(cached);
-      if (Date.now() < expires) signedUrl = url;
-    } catch {}
-  }
-
-  if (!movement.video_path) {
+  if (!movement.video_path && !movement.link) {
     contentEl.innerHTML = '<p class="status-msg error">Movement has no media file.</p>';
     return;
   }
 
+  let signedUrl = null;
+  if (movement.video_path) {
+    // Check cache before calling edge function (signed URLs last 24h)
+    const cacheKey = `signed-url:${movement.video_path}`;
+    const cached   = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const { url, expires } = JSON.parse(cached);
+        if (Date.now() < expires) signedUrl = url;
+      } catch {}
+    }
+  }
+
   const [signedResult, uploaderResult] = await Promise.all([
-    signedUrl ? Promise.resolve({ signedUrl }) : callEdgeFunction('r2-signed-url', { path: movement.video_path }),
+    !movement.video_path ? Promise.resolve({ signedUrl: null })
+      : signedUrl ? Promise.resolve({ signedUrl })
+      : callEdgeFunction('r2-signed-url', { path: movement.video_path }),
     client.from('profiles').select('full_name').eq('id', movement.uploaded_by).single()
   ]);
 
-  if (signedResult.error || !signedResult.signedUrl) {
+  if (movement.video_path && (signedResult.error || !signedResult.signedUrl)) {
     contentEl.innerHTML = '<p class="status-msg error">Could not load file. Please try again.</p>';
     return;
   }
 
-  if (!signedUrl) {
-    sessionStorage.setItem(cacheKey, JSON.stringify({
+  if (movement.video_path && !signedUrl) {
+    sessionStorage.setItem(`signed-url:${movement.video_path}`, JSON.stringify({
       url:     signedResult.signedUrl,
       expires: Date.now() + 60 * 60 * 1000,
     }));
@@ -68,6 +74,32 @@ async function load() {
   }
 }
 
+// ── Media ────────────────────────────────────────────────────
+function mediaHtml(forEdit) {
+  if (movement.link) return embedHtml(movement.link, movement.name, movementClip(movement));
+  if (isImagePath(movement.video_path)) {
+    return `<img class="video-player" src="${movement.signedUrl}" alt="${escape(movement.name)}" id="${forEdit ? 'edit-image' : 'movement-image'}"${forEdit ? '' : ' style="cursor:pointer;"'}>`;
+  }
+  return forEdit
+    ? `<video class="video-player" controls playsinline id="video-player">
+        <source src="${movement.signedUrl}">
+        Your browser does not support video playback.
+       </video>`
+    : `<video class="video-player" controls playsinline autoplay muted loop>
+        <source src="${movement.signedUrl}">
+        Your browser does not support video playback.
+       </video>`;
+}
+
+function sourceCreditHtml() {
+  const src = parseVideoLink(movement.source_url);
+  if (!src) return '';
+  const label = movement.source_author
+    ? `From ${escape(movement.source_author)} on ${platformLabel(src.platform)} ↗`
+    : `From ${platformLabel(src.platform)} ↗`;
+  return `<p class="source-credit"><a href="${escape(sourceLinkUrl(src, movementClip(movement)))}" target="_blank" rel="noopener noreferrer">${label}</a></p>`;
+}
+
 // ── View mode ────────────────────────────────────────────────
 function renderView() {
   const groups = (movement.tags || []).length > 0
@@ -78,15 +110,9 @@ function renderView() {
     ? movement.alt_names.map(n => `<span class="meta-tag">${escape(n)}</span>`).join('')
     : '<span class="meta-none">None</span>';
 
-  const mediaHtml = isImagePath(movement.video_path)
-    ? `<img class="video-player" src="${movement.signedUrl}" alt="${escape(movement.name)}" id="movement-image" style="cursor:pointer;">`
-    : `<video class="video-player" controls playsinline autoplay muted loop>
-        <source src="${movement.signedUrl}">
-        Your browser does not support video playback.
-       </video>`;
-
   contentEl.innerHTML = `
-    ${mediaHtml}
+    ${mediaHtml(false)}
+    ${sourceCreditHtml()}
 
     <div class="detail-header">
       <h1 class="detail-title">${escape(movement.name)}</h1>
@@ -114,7 +140,7 @@ function renderView() {
     </div>
   `;
 
-  if (isImagePath(movement.video_path)) {
+  if (!movement.link && isImagePath(movement.video_path)) {
     document.getElementById('movement-image').addEventListener('click', function () {
       this.requestFullscreen().catch(() => {});
     });
@@ -133,15 +159,8 @@ async function renderEdit() {
     return `<label class="pill"><input type="checkbox" value="${escape(g)}" ${checked}> ${escape(g)}</label>`;
   }).join('');
 
-  const editMediaHtml = isImagePath(movement.video_path)
-    ? `<img class="video-player" src="${movement.signedUrl}" alt="${escape(movement.name)}" id="edit-image">`
-    : `<video class="video-player" controls playsinline id="video-player">
-        <source src="${movement.signedUrl}">
-        Your browser does not support video playback.
-       </video>`;
-
   contentEl.innerHTML = `
-    ${editMediaHtml}
+    ${mediaHtml(true)}
 
     <form id="edit-form">
       <div id="error-msg" class="error hidden"></div>

@@ -62,9 +62,42 @@ async function teardownImageMovementFixture(client, id) {
   if (error) throw new Error(`Image fixture cleanup failed: ${error.message}`);
 }
 
+// Link fixtures are NEVER inserted as 'pending' — the NAS worker polls the live
+// database and would try to copy them. link_only / done / failed are ignored by it.
+async function setupLinkMovementFixture(email, password, over = {}) {
+  const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const { error: authError } = await client.auth.signInWithPassword({ email, password });
+  if (authError) throw new Error(`Fixture auth failed: ${authError.message}`);
+  const { data: { user } } = await client.auth.getUser();
+
+  const { data, error } = await client.from('movements').insert({
+    name:            '__test_link_fixture__',
+    alt_names:       [],
+    tags:            [],
+    comments:        null,
+    video_path:      null,
+    source_url:      'https://www.youtube.com/watch?v=4taYjKlmihU',
+    source_author:   "Pierre's Elite Performance",
+    download_status: 'link_only',
+    uploaded_by:     user.id,
+    ...over,
+  }).select('id').single();
+
+  if (error) throw new Error(`Link fixture insert failed: ${error.message}`);
+  return { client, id: data.id };
+}
+
+async function teardownLinkMovementFixture(client, id) {
+  if (!client || !id) return;
+  const { error } = await client.from('movements').delete().eq('id', id);
+  if (error) throw new Error(`Link fixture cleanup failed: ${error.message}`);
+}
+
 module.exports = {
   setupMovementFixture,
   teardownMovementFixture,
   setupImageMovementFixture,
   teardownImageMovementFixture,
+  setupLinkMovementFixture,
+  teardownLinkMovementFixture,
 };

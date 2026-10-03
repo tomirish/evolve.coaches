@@ -751,6 +751,21 @@ body {
   display: block;
 }
 
+.source-credit {
+  text-align: center;
+  margin: -1rem 0 1.25rem;
+  font-size: 0.875rem;
+}
+
+.source-credit a {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.source-credit a:hover {
+  color: var(--accent);
+}
+
 .clip-mode {
   display: flex;
   gap: 1.25rem;

@@ -15,7 +15,9 @@ async function cleanupStaleFixtures() {
     email:    process.env.COACH_EMAIL,
     password: process.env.COACH_PASSWORD,
   });
-  await client.from('movements').delete().like('name', '__%__%');
+  // Fixtures are all named __test_…__. `_` is a single-character wildcard in
+  // LIKE, so escape it — unescaped, '__%__%' matched every movement the coach owns.
+  await client.from('movements').delete().like('name', '\\_\\_test\\_%\\_\\_');
 }
 
 const AUTH_DIR  = path.join(__dirname, '.auth');

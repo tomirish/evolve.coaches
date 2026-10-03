@@ -510,6 +510,35 @@ test.describe('Upload page — paste a link', () => {
     await expect(page.locator('#submit-btn')).toHaveText('Upload Movement');
   });
 
+  test('a slow AI name for a dropped file cannot overwrite a link pasted meanwhile', async ({ page }) => {
+    await stubLinkServices(page);
+    let release;
+    const gate = new Promise(r => { release = r; });
+    await page.route('**/functions/v1/vision-name', async route => {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({ status: 200, headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS' } });
+        return;
+      }
+      await gate;
+      await route.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ name: 'Slow AI Name' }), headers: { 'Access-Control-Allow-Origin': '*' } });
+    });
+    await page.goto('/upload.html');
+    await mockFrameExtraction(page);
+    await page.setInputFiles('#video-file', FAKE_VIDEO);
+    await expect(page.locator('#name-ocr-hint')).toHaveText('Detecting movement name…');
+    await page.fill('#video-link', YT_LINK);
+    await expect(page.locator('#name')).toHaveValue('Fast Footwork & Agility Ladder Drills');
+    release();
+    await page.waitForTimeout(500);
+    await expect(page.locator('#single-preview')).toBeHidden();
+    await expect(page.locator('#submit-btn')).toHaveText('Save Movement');
+    await expect(page.locator('#name')).toHaveValue('Fast Footwork & Agility Ladder Drills');
+  });
+
   test('a link already in the library shows a duplicate warning', async ({ page }) => {
     const fx = await setupLinkMovementFixture(COACH_EMAIL, COACH_PASSWORD);
     try {

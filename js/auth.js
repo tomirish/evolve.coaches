@@ -109,7 +109,7 @@ function parseVideoLink(raw) {
     return youtubeLink(m && m[1], u);
   }
   if (host === 'instagram.com' || host === 'www.instagram.com') {
-    m = path.match(/^\/(p|reels?)\/([^/]+)\/?$/);
+    m = path.match(/^(?:\/[A-Za-z0-9._]{1,30})?\/(p|reels?)\/([^/]+)\/?$/);
     if (!m || !/^[A-Za-z0-9_-]{5,40}$/.test(m[2])) return null;
     const kind = m[1] === 'p' ? 'p' : 'reel';
     return {
@@ -229,11 +229,11 @@ function movementClip(row) {
 }
 
 // The shared "Which part?" control — upload page and the movement edit page.
-function clipFieldsHtml(clip, prefillStart) {
+function clipFieldsHtml(clip, prefillStart, hidden = false) {
   const startVal = clip ? formatClipTime(clip.start) : (prefillStart != null ? formatClipTime(prefillStart) : '');
   const endVal   = clip ? formatClipTime(clip.end) : '';
   return `
-    <div class="field clip-field">
+    <div class="field clip-field${hidden ? ' hidden' : ''}">
       <label>Which part?</label>
       <div class="clip-mode">
         <label><input type="radio" name="clip-mode" value="whole" ${clip ? '' : 'checked'}> Whole video</label>

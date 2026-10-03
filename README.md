@@ -11,7 +11,7 @@ A private video library for coaches at [Evolve Strong Fitness](https://evolvestr
 - Paste a YouTube or Instagram link instead of uploading — a copy is saved automatically
 - **Bulk upload** — drop up to 48+ videos at once; AI names each automatically with 4-concurrent OCR jobs, video thumbnails with click-to-play preview
 - Browse movements with search, tag filters, and A–Z / Z–A / Recent sort — alternative names appear as their own catalog cards
-- Watch videos and edit metadata inline; replace a video file without losing metadata
+- Watch videos and edit metadata inline; replace the video with a file or a link — or change a link's part — without losing metadata
 - Signed video URLs via Cloudflare R2 with session caching for fast repeat loads
 - Tags page (all coaches) — add and rename tags used across the catalog
 - Admin page — invite and manage users, manage tags, browse all videos with thumbnails

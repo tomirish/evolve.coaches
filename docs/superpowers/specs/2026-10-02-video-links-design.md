@@ -33,7 +33,7 @@ One link per upload. Only these shapes are accepted:
 | Platform | Accepted forms | Canonical form stored |
 |---|---|---|
 | YouTube | `youtube.com/watch?v=ID`, `youtu.be/ID`, `youtube.com/shorts/ID` (with or without `www.`/`m.`) | `https://www.youtube.com/watch?v=ID` |
-| Instagram | `instagram.com/p/ID/`, `instagram.com/reel/ID/`, `instagram.com/reels/ID/` | `https://www.instagram.com/p/ID/` or `https://www.instagram.com/reel/ID/` |
+| Instagram | `instagram.com/p/ID/`, `instagram.com/reel/ID/`, `instagram.com/reels/ID/`, and the same three behind a username: `instagram.com/USERNAME/p/ID/`, `…/USERNAME/reel/ID/` | `https://www.instagram.com/p/ID/` or `https://www.instagram.com/reel/ID/` |
 
 IDs must match `^[A-Za-z0-9_-]+$`. All query parameters are dropped — share links carry tracking tokens (`?si=`, `?is=`, `?stkn=`, `?igsh=`) that identify the sharer. Anything else gets a friendly error naming the supported sites.
 

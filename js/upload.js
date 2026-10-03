@@ -41,6 +41,7 @@ let allTags       = [];
 // ── Single mode state ─────────────────────────────────────────────────────────
 let ocrFilledName = false;
 let singleFile    = null;
+let selectionToken = 0;   // bumped on every file/link change so stale async work can bail out
 let currentLink = null;   // parsed link when the coach pasted one instead of a file
 let linkAuthor  = null;   // YouTube oEmbed author_name, saved as source_author
 let linkClip    = { clip: null, error: null };   // latest validateClip() result
@@ -234,6 +235,7 @@ fileDropEl.addEventListener('drop', async (e) => {
 
 async function activateSingle(file) {
   clearLink();
+  const token = ++selectionToken;
   if (currentMode === 'bulk') {
     queue = [];
     bulkQueueEl.innerHTML = '';
@@ -261,6 +263,7 @@ async function activateSingle(file) {
   submitBtn.textContent = 'Checking file…';
 
   const { ok, error: validationError } = await validateFile(file);
+  if (token !== selectionToken) return;
   if (!ok) {
     showSingleError(validationError);
     submitBtn.disabled    = true;
@@ -270,7 +273,7 @@ async function activateSingle(file) {
 
   submitBtn.disabled    = false;
   submitBtn.textContent = 'Upload Movement';
-  suggestMovementName(file);
+  suggestMovementName(file, token);
 }
 
 // ── Link mode ─────────────────────────────────────────────────────────────────
@@ -291,6 +294,7 @@ linkInput.addEventListener('input', () => {
 });
 
 function activateLink(link) {
+  selectionToken++;
   if (currentMode === 'bulk') {
     queue = [];
     bulkQueueEl.innerHTML = '';
@@ -324,6 +328,9 @@ function activateLink(link) {
   });
   if (ocrFilledName) { nameInput.value = ''; ocrFilledName = false; }
   nameOcrHint.classList.add('hidden');
+  nameInput.placeholder = 'e.g. Barbell Back Squat';
+  nameInput.closest('.field').classList.remove('needs-name');
+  fileDropEl.classList.add('compact');
 
   submitBtn.disabled    = false;
   submitBtn.textContent = 'Save Movement';
@@ -333,6 +340,7 @@ function activateLink(link) {
 }
 
 function clearLink() {
+  selectionToken++;
   if (!currentLink && !linkInput.value) return;
   currentLink = null;
   linkAuthor  = null;
@@ -350,6 +358,7 @@ function clearLink() {
 
 function resetToEmpty() {
   clearLink();
+  fileDropEl.classList.remove('compact');
   singleMode.classList.add('hidden');
   fileAiHint.classList.remove('hidden');
 }
@@ -478,7 +487,7 @@ form.addEventListener('submit', async (e) => {
 });
 
 // ── Single mode OCR ───────────────────────────────────────────────────────────
-async function suggestMovementName(file) {
+async function suggestMovementName(file, token = selectionToken) {
   singleFile = file;
   nameOcrHint.textContent = 'Detecting movement name…';
   nameOcrHint.classList.remove('hidden');
@@ -486,6 +495,7 @@ async function suggestMovementName(file) {
     const { base64, dataUrl } = isImagePath(file.name)
       ? await readImageAsBase64(file)
       : await extractVideoFrameWithDataUrl(file);
+    if (token !== selectionToken) return;
 
     const previewEl   = document.getElementById('single-preview');
     const thumbEl     = document.getElementById('single-thumb');
@@ -504,6 +514,7 @@ async function suggestMovementName(file) {
     }
 
     const result = await callEdgeFunction('vision-name', { image: base64 });
+    if (token !== selectionToken) return;
     if (result.error || !result.name) {
       nameInput.placeholder = 'AI couldn\'t read a name from this file — please type it in.';
       nameInput.closest('.field').classList.add('needs-name');
@@ -519,6 +530,7 @@ async function suggestMovementName(file) {
       nameOcrHint.classList.add('hidden');
     }
   } catch {
+    if (token !== selectionToken) return;
     nameInput.placeholder = 'AI couldn\'t read a name from this file — please type it in.';
     nameOcrHint.classList.add('hidden');
   }

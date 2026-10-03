@@ -22,6 +22,8 @@ test.describe('link and part helpers', () => {
     ['https://youtube.com/shorts/4taYjKlmihU?feature=share', 'youtube', '4taYjKlmihU', 'https://www.youtube.com/watch?v=4taYjKlmihU', null],
     ['https://www.instagram.com/reel/C1a2B3c4D5e/?igsh=xyz', 'instagram', 'C1a2B3c4D5e', 'https://www.instagram.com/reel/C1a2B3c4D5e/', null],
     ['https://instagram.com/reels/C1a2B3c4D5e', 'instagram', 'C1a2B3c4D5e', 'https://www.instagram.com/reel/C1a2B3c4D5e/', null],
+    ['https://www.instagram.com/karasaundo/reel/C1a2B3c4D5e/?igsh=x', 'instagram', 'C1a2B3c4D5e', 'https://www.instagram.com/reel/C1a2B3c4D5e/', null],
+    ['https://www.instagram.com/karasaundo/p/DdFIrIfk0W2/', 'instagram', 'DdFIrIfk0W2', 'https://www.instagram.com/p/DdFIrIfk0W2/', null],
     ['  https://youtu.be/4taYjKlmihU\n', 'youtube', '4taYjKlmihU', 'https://www.youtube.com/watch?v=4taYjKlmihU', null],
   ];
 

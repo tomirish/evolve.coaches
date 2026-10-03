@@ -209,6 +209,25 @@ test.describe('Replace — file and link', () => {
     await expect(page.locator('.embed-frame iframe')).toBeVisible();
   });
 
+  test('"Which part?" only appears once a link is in the replace field, and a link clears a chosen file', async ({ page }) => {
+    await page.route('**/functions/v1/r2-signed-url', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) }));
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto(`/movement.html?id=${fx.id}&edit=1`);
+    await expect(page.locator('.clip-field')).toBeHidden();
+    await page.setInputFiles('#replace-file', { name: 'new.mp4', mimeType: 'video/mp4', buffer: Buffer.from('fake') });
+    await expect(page.locator('#replace-label')).toHaveText('new.mp4');
+    await page.fill('#replace-link', 'https://youtu.be/4taYjKlmihU?is=x');
+    await expect(page.locator('.clip-field')).toBeVisible();
+    await expect(page.locator('#replace-label')).toHaveText('Tap to select a replacement file');
+    expect(await page.$eval('#replace-file', e => e.files.length)).toBe(0);
+    await page.fill('#replace-link', 'not a link');
+    await expect(page.locator('.clip-field')).toBeHidden();
+    await page.fill('#replace-link', 'https://youtu.be/4taYjKlmihU');
+    await expect(page.locator('.clip-field')).toBeVisible();
+    await page.setInputFiles('#replace-file', { name: 'again.mp4', mimeType: 'video/mp4', buffer: Buffer.from('fake') });
+    await expect(page.locator('.clip-field')).toBeHidden();
+  });
+
   test('an unsupported replacement link is refused before anything is deleted', async ({ page }) => {
     let deleted = false;
     await page.route('**/functions/v1/r2-signed-url', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) }));
@@ -248,6 +267,45 @@ test.describe('Replace — link with file', () => {
       download_status: null, download_attempts: 0, download_error: null,
     });
     expect(patch.video_path).toMatch(/^[0-9a-f-]{36}\.mp4$/);
+  });
+
+  test('replacing a link with a file shows the new state even if signing the new file fails', async ({ page }) => {
+    await page.route('https://www.youtube-nocookie.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '' }));
+    await page.route('**/functions/v1/r2-upload-url', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'http://localhost:8080/__upload' }) }));
+    await page.route('http://localhost:8080/__upload', r => r.fulfill({ status: 200, body: '' }));
+    await page.route('**/functions/v1/r2-signed-url', r => r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"x"}' }));
+    await page.route('**/rest/v1/movements**', async r => {
+      if (r.request().method() === 'PATCH') await r.fulfill({ status: 204, body: '' });
+      else await r.continue();
+    });
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto(`/movement.html?id=${linkFx.id}&edit=1`);
+    await expect(page.locator('.embed-frame iframe')).toBeVisible();
+    await page.setInputFiles('#replace-file', { name: 'new.mp4', mimeType: 'video/mp4', buffer: Buffer.from('fake') });
+    await page.click('#replace-btn');
+    await expect(page.locator('#replace-success')).toHaveText('File replaced successfully.');
+    await expect(page.locator('.embed-frame iframe')).toHaveCount(0);
+  });
+
+  test('pressing Replace with the same link and part is refused before anything is deleted or saved', async ({ page }) => {
+    let deleted = false, patched = false;
+    await linkFx.client.from('movements').update({ clip_start: 69, clip_end: 99 }).eq('id', linkFx.id);
+    await page.route('https://www.youtube-nocookie.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '' }));
+    await page.route('**/functions/v1/r2-delete', async r => { deleted = true; await r.fulfill({ status: 200, body: '{}' }); });
+    await page.route('**/rest/v1/movements**', async r => {
+      if (r.request().method() === 'PATCH') { patched = true; await r.fulfill({ status: 204, body: '' }); }
+      else await r.continue();
+    });
+    try {
+      await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+      await page.goto(`/movement.html?id=${linkFx.id}&edit=1`);
+      await page.click('#replace-btn');
+      await expect(page.locator('#replace-error')).toHaveText("That's already the current link and part — change the link or the part to replace it.");
+      expect(deleted).toBe(false);
+      expect(patched).toBe(false);
+    } finally {
+      await linkFx.client.from('movements').update({ clip_start: null, clip_end: null }).eq('id', linkFx.id);
+    }
   });
 
   test('changing the part of a link: the edit page pre-fills it, Replace saves the new part', async ({ page }) => {

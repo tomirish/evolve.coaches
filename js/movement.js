@@ -200,12 +200,12 @@ async function renderEdit() {
         <input type="file" id="replace-file" accept="video/*,image/*">
         <p id="replace-label">Tap to select a replacement file</p>
       </div>
-      <div class="link-paste" style="margin-top: 0.75rem;">
+      <div class="link-paste">
         <label for="replace-link" class="link-paste-label">…or paste a YouTube or Instagram link</label>
         <input type="url" id="replace-link" placeholder="https://www.instagram.com/reel/…" inputmode="url" autocomplete="off"
                value="${movement.source_url ? escape(movement.source_url) : ''}">
       </div>
-      ${clipFieldsHtml(movementClip(movement), null)}
+      ${clipFieldsHtml(movementClip(movement), null, !parseVideoLink(movement.source_url || ''))}
       <div class="progress-wrap hidden" id="replace-progress-wrap">
         <div class="progress-bar">
           <div class="progress-fill" id="replace-progress-fill"></div>
@@ -236,6 +236,15 @@ async function renderEdit() {
     document.getElementById('replace-error').classList.add('hidden');
     document.getElementById('replace-label').textContent = file.name;
     document.getElementById('replace-link').value = '';
+    document.querySelector('.clip-field').classList.add('hidden');
+  });
+  document.getElementById('replace-link').addEventListener('input', () => {
+    const value = document.getElementById('replace-link').value.trim();
+    document.querySelector('.clip-field').classList.toggle('hidden', !parseVideoLink(value));
+    if (value) {
+      document.getElementById('replace-file').value = '';
+      document.getElementById('replace-label').textContent = 'Tap to select a replacement file';
+    }
   });
   document.getElementById('replace-btn').addEventListener('click', replaceVideo);
   bindClipFields(result => { replaceClip = result; });
@@ -405,15 +414,16 @@ async function replaceVideo() {
   Object.assign(movement, { source_url: null, source_author: null, clip_start: null, clip_end: null, download_status: null, link: null });
 
   const signed = await callEdgeFunction('r2-signed-url', { path: movement.video_path });
+  if (signed && signed.signedUrl) movement.signedUrl = signed.signedUrl;
+  if (wasLink) {
+    // The old embed must not stay on screen, whether or not signing worked.
+    await renderEdit();
+    const success = document.getElementById('replace-success');
+    success.textContent = 'File replaced successfully.';
+    success.classList.remove('hidden');
+    return;
+  }
   if (signed && signed.signedUrl) {
-    movement.signedUrl = signed.signedUrl;
-    if (wasLink) {
-      await renderEdit();
-      const success = document.getElementById('replace-success');
-      success.textContent = 'File replaced successfully.';
-      success.classList.remove('hidden');
-      return;
-    }
     const videoEl = document.querySelector('#video-player source');
     if (videoEl) {
       videoEl.src = signed.signedUrl;
@@ -448,6 +458,16 @@ async function replaceWithLink(rawLink) {
 
   if (replaceClip.error) {
     replaceError.textContent = replaceClip.error;
+    replaceError.classList.remove('hidden');
+    return;
+  }
+
+  const cur  = movementClip(movement);
+  const same = replaceClip.clip
+    ? !!cur && cur.start === replaceClip.clip.start && cur.end === replaceClip.clip.end
+    : !cur;
+  if (link.canonicalUrl === movement.source_url && same) {
+    replaceError.textContent = "That's already the current link and part — change the link or the part to replace it.";
     replaceError.classList.remove('hidden');
     return;
   }

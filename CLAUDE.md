@@ -155,6 +155,7 @@ Run through the auth/ownership checklist above for every new or modified Edge Fu
 - `gh api --field` doesn't work for nested JSON (branch protection, security_and_analysis) — use `--input -` with a heredoc instead
 - Secret scanning extras (non-provider patterns, validity checks) cannot be set via API on public repos — Settings → Advanced Security in the web UI
 - Live site health check: `curl -sI https://tomirish.github.io/evolve.coaches/` → expect `HTTP/2 200`
+- **Never run the local suite while CI is testing the same live DB.** Both use the same test accounts and fixtures (e.g. the test coach's `theme`), so overlapping runs flip shared state under each other — this failed `f6d5f34`'s pipeline on 2026-10-03. Run locally before pushing, not right after.
 - `gh run watch --exit-status` can return nonzero spuriously — confirm with `gh run view --json conclusion` before treating a run as failed
 - A repo-scoped GitHub PAT exists for pushes and API calls on this repo (plain `gh` uses the broader dev.tools token, which lacks admin scopes) — location and usage pattern are in Claude's project memory, not here (public repo)
 

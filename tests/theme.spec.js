@@ -20,9 +20,10 @@ test.beforeAll(async () => {
   ({ data: { user: { id: coachId } } } = await coach.auth.getUser());
 });
 
-test.afterEach(async () => {
-  await coach.from('profiles').update({ theme: 'light' }).eq('id', coachId);
-});
+// Reset before as well as after: a crashed or overlapping run can leave it dark
+const resetTheme = () => coach.from('profiles').update({ theme: 'light' }).eq('id', coachId);
+test.beforeEach(resetTheme);
+test.afterEach(resetTheme);
 
 const bodyBg = (page) => page.evaluate(() => getComputedStyle(document.body).backgroundColor);
 

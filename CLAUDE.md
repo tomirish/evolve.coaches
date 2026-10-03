@@ -49,8 +49,8 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 ## MVP Scope
 1. **Login page** — email/password auth with "Forgot password?" reset flow (reset.html)
 2. **Movement catalog** — search by name, filter by tag, and three-way sort (A–Z / Z–A / Recent). Alt names appear as their own cards so sort and search work naturally.
-3. **Upload page** — video file + metadata (movement name, alternative names, tags, comments). Warns if a movement with the same name already exists.
-4. **Movement detail page** — watch video, view and edit metadata including alternative names. Replace video file without losing metadata. Admin-only delete.
+3. **Upload page** — video file + metadata, or a pasted YouTube/Instagram link, optionally just part of it (Start/End) (movement name, alternative names, tags, comments). Warns if a movement with the same name already exists.
+4. **Movement detail page** — watch video, view and edit metadata including alternative names. Replace with a file or a link without losing metadata; changing a link's part is a Replace. Admin-only delete.
 5. **Account page** — coaches can update their name, email, and password while logged in.
 6. **Admin page** — tabbed interface (Videos / Tags / Users). Videos tab: searchable list with edit and delete. Tags tab: delete tags with usage counts (add/rename is on tags.html). Users tab: invite coaches, edit name/role, reset password, delete.
 7. **Tags page** — accessible to all coaches. Add new tags and rename existing ones. Renaming a tag updates all movements that use it.
@@ -58,7 +58,7 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 
 ## Supabase Setup (Complete)
 - `profiles` table — stores full_name and role (admin/coach), auto-created on signup via trigger
-- `movements` table — name, alt_names (text[]), tags (text[]), comments, video_path, uploaded_by, timestamps
+- `movements` table — name, alt_names (text[]), tags (text[]), comments, video_path, uploaded_by, timestamps, plus the link columns `source_url, source_author, clip_start, clip_end, download_status, download_attempts, download_error`
 - `tags` table — tag names, managed via tags.html (all coaches) and Admin Tags tab (admin delete)
 - RLS enabled on all tables with policies for read/write/delete by role
 - Video storage: Cloudflare R2 (not Supabase Storage) — see R2 note below
@@ -89,6 +89,13 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 - **R2 presigned URLs succeed even for missing files** — `r2-signed-url` edge function signs any key path without checking existence. A 200 from the function does not mean the file is in R2.
 - **Playwright auth caching** — `tests/helpers/global-setup.js` logs in once per user type and saves storageState to `tests/helpers/.auth/`. `loginAs()` restores saved state instead of hitting Supabase. `page.evaluate()` patches only the current page context — always call after `page.goto()`, never before.
 - **`validateFile()` in upload.js is patchable** — top-level function, so tests can override via `window.validateFile = () => Promise.resolve({ ok: true })`. Always mock it (via `mockValidation()` or `mockFrameExtraction()`) in tests that use fake file buffers, or validation will reject them.
+- **Pasted links: embed first, copy to R2 by the NAS.** `video_path` set → R2. Otherwise `source_url` → embed. The NAS worker (`dev.tools/automation/archive_evolve_links/`) copies pending links. The NAS is used, not a server, because YouTube and Instagram block datacenter IPs. See `docs/superpowers/specs/2026-10-02-video-links-design.md`.
+- **`parseVideoLink()` in auth.js is the single source of truth** for accepted links. It must match the `movements_source_url_format` CHECK and the worker's `parse_link()`. Embed URLs are built only from the parsed ID.
+- **`download_*`, never `archive_*`.** `archived_at` already means soft-deleted, and the UI says "Saving copy…" / "Copy failed".
+- **Parts of links are trimmed by the NAS, not the browser.** The YouTube embed honours `start`/`end` until the copy lands (no loop, because YouTube's loop restarts at 0:00); Instagram shows the whole post until then. A part is at most 180 s (CHECK constraint plus `MAX_CLIP_SECONDS`). Start + End with a live length note was chosen over an End/Length switch: one way to say it, zero onboarding.
+- **Tests never write a `pending` link row.** The worker polls the live DB. Fixtures use `link_only` / `done` / `failed`, and pending writes are intercepted with `page.route`.
+- **Replace on the edit page is also how a coach changes a link's part** — the link field is pre-filled with the current link, so editing Start/End and saving is a Replace.
+- **Admin "Keep as link only" sets `download_status='link_only'`** and is the way to clear a "Copy failed" alert for content that can't be copied.
 - **Stubbing Edge Functions in tests** — use `page.route('**/functions/v1/<name>', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({...}) }))` to decouple tests from external service latency. See movement.spec.js for the r2-signed-url pattern. Call before `page.goto()`.
 
 ## Working Principles

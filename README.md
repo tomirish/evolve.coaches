@@ -8,6 +8,7 @@ A private video library for coaches at [Evolve Strong Fitness](https://evolvestr
 ## Features
 - Secure login with password reset (coaches only)
 - **Single upload** — video + metadata with AI-suggested movement name (Claude Haiku Vision OCR from video frame)
+- Paste a YouTube or Instagram link instead of uploading — a copy is saved automatically
 - **Bulk upload** — drop up to 48+ videos at once; AI names each automatically with 4-concurrent OCR jobs, video thumbnails with click-to-play preview
 - Browse movements with search, tag filters, and A–Z / Z–A / Recent sort — alternative names appear as their own catalog cards
 - Watch videos and edit metadata inline; replace a video file without losing metadata

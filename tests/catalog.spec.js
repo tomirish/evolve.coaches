@@ -51,6 +51,26 @@ test('sort button cycles A–Z → Z–A → Recent', async ({ page }) => {
   await expect(btn).toHaveText('A–Z');
 });
 
+test('sort choice is remembered after reload', async ({ page }) => {
+  const btn = page.locator('#sort-btn');
+  await expect(page.locator('.movement-card').first()).toBeVisible({ timeout: 15000 });
+  await btn.click();
+  await expect(btn).toHaveText('Z–A');
+
+  await page.reload();
+  await expect(btn).toHaveText('Z–A');
+  await expect(page.locator('.movement-card').first()).toBeVisible({ timeout: 15000 });
+  const names = await page.locator('.movement-name').allTextContents();
+  const desc  = [...names].sort((a, b) => b.localeCompare(a));
+  expect(names).toEqual(desc);
+});
+
+test('unknown saved sort falls back to A–Z', async ({ page }) => {
+  await page.evaluate(() => localStorage.setItem('catalogSort', 'bogus'));
+  await page.reload();
+  await expect(page.locator('#sort-btn')).toHaveText('A–Z');
+});
+
 test('"All" filter pill is active by default', async ({ page }) => {
   const allPill = page.locator('.filter-pill[data-group="All"]');
   await expect(allPill).toHaveClass(/active/);

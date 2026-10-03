@@ -1,13 +1,23 @@
 requireAuth();
 
 let allMovements = [];
-let sortMode     = 'az'; // 'az', 'za', 'recent'
+let sortMode     = 'az'; // 'az', 'za', 'recent' — remembered per browser
 let activeGroup  = 'All';
 
 const listEl    = document.getElementById('catalog-list');
 const searchEl  = document.getElementById('search');
 const sortBtn   = document.getElementById('sort-btn');
 const filterBar = document.getElementById('filter-bar');
+
+const SORT_KEY    = 'catalogSort';
+const SORT_LABELS = { az: 'A–Z', za: 'Z–A', recent: 'Recent' };
+
+// Storage can throw (private mode, blocked site data) — fall back to A–Z
+try {
+  const saved = localStorage.getItem(SORT_KEY);
+  if (SORT_LABELS[saved]) sortMode = saved;
+} catch (_) {}
+sortBtn.textContent = SORT_LABELS[sortMode];
 
 // ── Fetch ────────────────────────────────────────────────────
 async function load() {
@@ -93,7 +103,8 @@ sortBtn.addEventListener('click', () => {
   if (sortMode === 'az')     sortMode = 'za';
   else if (sortMode === 'za') sortMode = 'recent';
   else                        sortMode = 'az';
-  sortBtn.textContent = sortMode === 'az' ? 'A–Z' : sortMode === 'za' ? 'Z–A' : 'Recent';
+  sortBtn.textContent = SORT_LABELS[sortMode];
+  try { localStorage.setItem(SORT_KEY, sortMode); } catch (_) {}
   render();
 });
 

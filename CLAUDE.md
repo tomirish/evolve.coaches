@@ -48,7 +48,7 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 
 ## MVP Scope
 1. **Login page** — email/password auth with "Forgot password?" reset flow (reset.html)
-2. **Movement catalog** — search by name, filter by tag, and three-way sort (A–Z / Z–A / Recent). Alt names appear as their own cards so sort and search work naturally.
+2. **Movement catalog** — search by name, filter by tag, and three-way sort (A–Z / Z–A / Recent), remembered per browser. Alt names appear as their own cards so sort and search work naturally.
 3. **Upload page** — video file + metadata, or a pasted YouTube/Instagram link, optionally just part of it (Start/End) (movement name, alternative names, tags, comments). Warns if a movement with the same name already exists.
 4. **Movement detail page** — watch video, view and edit metadata including alternative names. Replace with a file or a link without losing metadata; changing a link's part is a Replace. Admin-only delete.
 5. **Account page** — coaches can update their name, email, and password while logged in.
@@ -96,6 +96,7 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 - **Tests never write a `pending` link row.** The worker polls the live DB. Fixtures use `link_only` / `done` / `failed`, and pending writes are intercepted with `page.route`.
 - **Replace on the edit page is also how a coach changes a link's part** — the link field is pre-filled with the current link, so editing Start/End and saving is a Replace.
 - **Admin "Keep as link only" sets `download_status='link_only'`** and is the way to clear a "Copy failed" alert for content that can't be copied.
+- **Catalog sort is remembered in `localStorage` (`catalogSort`), not on the profile, and there is no preferences page** — a remembered choice beats a setting coaches have to find. Per-device only; if coaches ask for it to follow them across devices, move it to a `profiles` column. Dark mode, if done, should follow the device's `prefers-color-scheme` rather than a toggle. Don't add preferences coaches haven't asked for.
 - **Stubbing Edge Functions in tests** — use `page.route('**/functions/v1/<name>', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({...}) }))` to decouple tests from external service latency. See movement.spec.js for the r2-signed-url pattern. Call before `page.goto()`.
 
 ## Working Principles

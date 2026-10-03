@@ -201,3 +201,30 @@ test.describe('video link constraints', () => {
     expect(error?.code).toBe('23514');
   });
 });
+
+test.describe('profile role', () => {
+  test('coach cannot promote themselves to admin', async () => {
+    const coach = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    await coach.auth.signInWithPassword({ email: COACH_EMAIL, password: COACH_PASSWORD });
+    const { data: { user } } = await coach.auth.getUser();
+
+    try {
+      await coach.from('profiles').update({ role: 'admin' }).eq('id', user.id);
+      const { data } = await adminClient.from('profiles').select('role').eq('id', user.id).single();
+      expect(data.role).toBe('coach');
+    } finally {
+      // If the guard is missing, the update above succeeded — put the test coach back
+      await adminClient.from('profiles').update({ role: 'coach' }).eq('id', user.id);
+    }
+  });
+
+  test('coach can still update their own name', async () => {
+    const coach = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    await coach.auth.signInWithPassword({ email: COACH_EMAIL, password: COACH_PASSWORD });
+    const { data: { user } } = await coach.auth.getUser();
+    const { data: before } = await coach.from('profiles').select('full_name').eq('id', user.id).single();
+
+    const { error } = await coach.from('profiles').update({ full_name: before.full_name }).eq('id', user.id);
+    expect(error).toBeNull();
+  });
+});

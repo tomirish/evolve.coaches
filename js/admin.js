@@ -250,7 +250,9 @@ async function setDownloadState(movementId, action) {
     ? { download_status: 'pending', download_attempts: 0, download_error: null }
     : { download_status: 'link_only' };
   movementErrorMsg.classList.add('hidden');
-  const { error } = await client.from('movements').update(patch).eq('id', movementId);
+  // Only a row still 'failed' — never one already moved on (e.g. a second tab's Retry).
+  const { error } = await client.from('movements').update(patch)
+    .eq('id', movementId).eq('download_status', 'failed');
   if (error) {
     movementErrorMsg.textContent = 'Failed to update. Please try again.';
     movementErrorMsg.classList.remove('hidden');

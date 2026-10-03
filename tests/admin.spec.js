@@ -86,14 +86,21 @@ test.describe('Videos tab — pasted links', () => {
 
   test('Retry resets the row to pending', async ({ page }) => {
     let patch = null;
+    let patchUrl = '';
     // Intercepted: a real 'pending' write would be picked up by the NAS worker.
     await page.route('**/rest/v1/movements**', async r => {
-      if (r.request().method() === 'PATCH') { patch = r.request().postDataJSON(); await r.fulfill({ status: 204, body: '' }); }
+      if (r.request().method() === 'PATCH') {
+        patch = r.request().postDataJSON();
+        patchUrl = decodeURIComponent(r.request().url());
+        await r.fulfill({ status: 204, body: '' });
+      }
       else await r.continue();
     });
     const row = await openRow(page);
     await row.locator('[data-download-action="retry"]').click();
     await expect.poll(() => patch).toEqual({ download_status: 'pending', download_attempts: 0, download_error: null });
+    // Only a row still 'failed' may be reset — never one the worker or another tab already moved on.
+    expect(patchUrl).toContain('download_status=eq.failed');
   });
 
   test('Keep as link only stops the alert and the badge changes', async ({ page }) => {

@@ -33,9 +33,18 @@ async function requireAdmin() {
   return profile;
 }
 
+// Light/dark: profiles.theme is the source of truth; localStorage holds a copy
+// that js/theme.js applies before first paint.
+function applyTheme(theme) {
+  if (theme === 'dark') document.documentElement.dataset.theme = 'dark';
+  else delete document.documentElement.dataset.theme;
+  try { localStorage.setItem('theme', theme); } catch (_) {}
+}
+
 async function initNav() {
   const profile = await getProfile();
   if (!profile) return;
+  applyTheme(profile.theme);
 
   const isAdmin   = profile.role === 'admin';
   const adminItem = isAdmin ? '<a href="admin.html">Admin</a>' : '';
@@ -50,6 +59,9 @@ async function initNav() {
       <div class="nav-user-menu hidden">
         <a href="tags.html">Tags</a>
         ${adminItem}
+        <button class="nav-theme-toggle nav-menu-separator" role="switch" aria-checked="false">
+          Dark mode <span class="nav-switch" aria-hidden="true"></span>
+        </button>
         <a href="account.html" class="nav-menu-separator">Account</a>
         <button class="nav-user-signout">Sign Out</button>
       </div>
@@ -65,6 +77,17 @@ async function initNav() {
     moreBtn.addEventListener('click', (e) => {
       e.stopPropagation();
       menu.classList.toggle('hidden');
+    });
+    const themeBtn = wrapper.querySelector('.nav-theme-toggle');
+    themeBtn.setAttribute('aria-checked', String(profile.theme === 'dark'));
+    themeBtn.addEventListener('click', (e) => {
+      e.stopPropagation(); // keep the menu open so the coach sees it change
+      const theme = profile.theme === 'dark' ? 'light' : 'dark';
+      profile.theme = theme;
+      applyTheme(theme);
+      themeBtn.setAttribute('aria-checked', String(theme === 'dark'));
+      // Best effort: if this fails the switch still works on this device
+      client.from('profiles').update({ theme }).eq('id', profile.id).then(() => {});
     });
     wrapper.querySelector('.nav-user-signout').addEventListener('click', signOut);
     document.addEventListener('click', () => menu.classList.add('hidden'));
@@ -281,6 +304,7 @@ function getInitials(fullName) {
 
 async function signOut() {
   await client.auth.signOut();
+  try { localStorage.removeItem('theme'); } catch (_) {} // shared computers
   window.location.href = 'index.html';
 }
 

@@ -54,10 +54,10 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 5. **Account page** — coaches can update their name, email, and password while logged in.
 6. **Admin page** — tabbed interface (Videos / Tags / Users). Videos tab: searchable list with edit and delete. Tags tab: delete tags with usage counts (add/rename is on tags.html). Users tab: invite coaches, edit name/role, reset password, delete.
 7. **Tags page** — accessible to all coaches. Add new tags and rename existing ones. Renaming a tag updates all movements that use it.
-8. **Nav** — persistent header on all pages. Logo + brand name (logo only on mobile). Avatar dropdown gives access to Tags, Admin (admin only), Account, and Sign Out.
+8. **Nav** — persistent header on all pages. Logo + brand name (logo only on mobile). Avatar dropdown gives access to Tags, Admin (admin only), a Dark mode switch, Account, and Sign Out.
 
 ## Supabase Setup (Complete)
-- `profiles` table — stores full_name and role (admin/coach), auto-created on signup via trigger
+- `profiles` table — stores full_name, role (admin/coach) and theme (light/dark), auto-created on signup via trigger. Only an admin can change `role` (`guard_profile_role` trigger)
 - `movements` table — name, alt_names (text[]), tags (text[]), comments, video_path, uploaded_by, timestamps, plus the link columns `source_url, source_author, clip_start, clip_end, download_status, download_attempts, download_error`
 - `tags` table — tag names, managed via tags.html (all coaches) and Admin Tags tab (admin delete)
 - RLS enabled on all tables with policies for read/write/delete by role
@@ -78,7 +78,7 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 - **No comments on catalog cards** — the catalog is a scanning experience. Comments belong on the detail page. Showing them on cards adds noise and inconsistent card heights without meaningful benefit.
 - **Nav user dropdown instead of separate Account link** — combining Account and Sign Out into a "Hi, NAME ▾" dropdown reduces nav items from 6 to 4 and adds a personal touch. The caret signals it's interactive. Sign Out is styled red inside the menu.
 - **Video replacement order: upload → update DB → delete old** — if storage delete fails, the orphaned file is invisible to coaches. Reversing the order (delete old first) risks losing the video entirely if the upload fails.
-- **Every page JS must call `initNav()`** — the nav user dropdown is injected dynamically by `initNav()` in auth.js. Every page's JS file must call it at init time or the nav will be broken on that page. Current pages: catalog.js, movement.js, upload.js, account.js, admin.js, tags.js.
+- **Every page JS must call `initNav()`** — the nav user dropdown is injected dynamically by `initNav()` in auth.js. Every page's JS file must call it at init time or the nav will be broken on that page. Current pages: catalog.js, movement.js, upload.js, account.js, admin.js, tags.js. It also applies the coach's saved theme.
 - **Shared utilities live in auth.js** — `escape()` (HTML escaping), `callEdgeFunction()`, `uploadToR2()`, `getProfile()`, `requireAuth()`, `requireAdmin()`, and `initNav()` are all defined in auth.js and available on every page since it's loaded first. Do not add local copies to individual page scripts.
 - **Single-branch workflow (replaced dev-branch workflow 2026-07)** — all work happens directly on `main`. GitHub Pages deploys via Actions (`actions/deploy-pages`), gated on the test job, so the live site only ever updates from a green pipeline. The old develop → ff-merge → main flow and its `GH_DEPLOY_TOKEN` PAT are gone.
 - **Resend for transactional email** — Supabase free tier is limited to 2 auth emails/hour. Resend handles invites and password resets via SMTP (smtp.resend.com:465). Domain `tom.irish` verified on Cloudflare with DKIM + SPF. App password stored in Supabase SMTP settings.
@@ -97,7 +97,9 @@ A private internal video index for coaches at Evolve Strong Fitness. Coaches log
 - **Tests never write a `pending` link row.** The worker polls the live DB. Fixtures use `link_only` / `done` / `failed`, and pending writes are intercepted with `page.route`.
 - **Replace on the edit page is also how a coach changes a link's part** — the link field is pre-filled with the current link, so editing Start/End and saving is a Replace.
 - **Admin "Keep as link only" sets `download_status='link_only'`** and is the way to clear a "Copy failed" alert for content that can't be copied.
-- **Catalog sort is remembered in `localStorage` (`catalogSort`), not on the profile, and there is no preferences page** — a remembered choice beats a setting coaches have to find. Per-device only; if coaches ask for it to follow them across devices, move it to a `profiles` column. Dark mode, if done, should follow the device's `prefers-color-scheme` rather than a toggle. Don't add preferences coaches haven't asked for.
+- **Catalog sort is remembered in `localStorage` (`catalogSort`), not on the profile, and there is no preferences page** — a remembered choice beats a setting coaches have to find. Per-device only; if coaches ask for it to follow them across devices, move it to a `profiles` column. Don't add preferences coaches haven't asked for.
+- **Dark mode is a per-coach switch in the avatar menu, light by default (2026-10-03)** — saved on `profiles.theme` so it follows the coach to every device; the device's own dark setting is deliberately ignored (most coaches use light). `localStorage['theme']` is only a local copy: `js/theme.js` (in `<head>` on every page — the one exception to "shared code lives in auth.js", because auth.js loads too late to avoid a white flash) applies it before first paint, and `applyTheme()` in `initNav()` corrects it from the profile. Sign-out clears the copy.
+- **Never hard-code a colour in style.css** — use the `:root` variables, and add a dark value to the `:root[data-theme="dark"]` block for any new one. `--surface` is the card/input/menu background; `--white` is text on the accent or the dark header, the same in both themes. Check new UI in both themes.
 - **Stubbing Edge Functions in tests** — use `page.route('**/functions/v1/<name>', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({...}) }))` to decouple tests from external service latency. See movement.spec.js for the r2-signed-url pattern. Call before `page.goto()`.
 
 ## Working Principles

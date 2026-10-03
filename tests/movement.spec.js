@@ -77,7 +77,7 @@ test.describe('Movement detail page — image', () => {
     await expect(page.locator('#edit-form')).toBeVisible();
   });
 
-  test('image movement edit mode shows Replace File heading', async ({ page }) => {
+  test('image movement edit mode shows Replace Video heading', async ({ page }) => {
     await page.route('**/functions/v1/r2-signed-url', route =>
       route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) })
     );
@@ -87,8 +87,8 @@ test.describe('Movement detail page — image', () => {
     await expect(page.locator('#edit-btn')).toBeVisible({ timeout: 20000 });
     await page.locator('#edit-btn').click();
 
-    await expect(page.locator('.admin-section-title')).toHaveText('Replace File', { timeout: 10000 });
-    await expect(page.locator('#replace-btn')).toHaveText('Replace File');
+    await expect(page.locator('.admin-section-title')).toHaveText('Replace Video', { timeout: 10000 });
+    await expect(page.locator('#replace-btn')).toHaveText('Replace');
     await expect(page.locator('#replace-label')).toContainText('replacement file');
   });
 });
@@ -172,4 +172,104 @@ test('a movement whose link cannot be parsed shows the no-media error', async ({
   await page.goto('/movement.html?id=00000000-0000-0000-0000-00000000000f');
   await expect(page.locator('.status-msg.error')).toHaveText('Movement has no media file.');
   await expect(page.locator('iframe')).toHaveCount(0);
+});
+
+test.describe('Replace — file and link', () => {
+  let fx;
+  test.beforeAll(async () => { fx = await setupMovementFixture(COACH_EMAIL, COACH_PASSWORD); });
+  test.afterAll(async () => { await teardownMovementFixture(fx?.client, fx?.id); });
+
+  test('replacing a file with a link deletes the old file and saves a pending link', async ({ page }) => {
+    const calls = { r2Delete: null, patch: null };
+    await page.route('**/functions/v1/r2-signed-url', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) }));
+    await page.route('**/functions/v1/r2-delete', async r => {
+      calls.r2Delete = r.request().postDataJSON();
+      await r.fulfill({ status: 200, contentType: 'application/json', body: '{}' });
+    });
+    await page.route('https://www.youtube.com/oembed**', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ title: 'T', author_name: 'Creator' }) }));
+    await page.route('https://www.youtube-nocookie.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '' }));
+    // Intercept the PATCH — a real 'pending' write would be picked up by the NAS worker.
+    await page.route('**/rest/v1/movements**', async r => {
+      if (r.request().method() === 'PATCH') { calls.patch = r.request().postDataJSON(); await r.fulfill({ status: 204, body: '' }); }
+      else await r.continue();
+    });
+
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto(`/movement.html?id=${fx.id}&edit=1`);
+    await page.fill('#replace-link', 'https://youtu.be/4taYjKlmihU?is=x');
+    await page.click('#replace-btn');
+    await expect(page.locator('#replace-success')).toHaveText('Replaced with the link. A copy will be saved automatically.');
+
+    expect(calls.r2Delete).toMatchObject({ path: '00000000-0000-0000-0000-000000000000.mp4', movementId: fx.id });
+    expect(calls.patch).toEqual({
+      video_path: null, source_url: 'https://www.youtube.com/watch?v=4taYjKlmihU', source_author: 'Creator',
+      clip_start: null, clip_end: null,
+      download_status: 'pending', download_attempts: 0, download_error: null,
+    });
+    await expect(page.locator('.embed-frame iframe')).toBeVisible();
+  });
+
+  test('an unsupported replacement link is refused before anything is deleted', async ({ page }) => {
+    let deleted = false;
+    await page.route('**/functions/v1/r2-signed-url', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) }));
+    await page.route('**/functions/v1/r2-delete', async r => { deleted = true; await r.fulfill({ status: 200, body: '{}' }); });
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto(`/movement.html?id=${fx.id}&edit=1`);
+    await page.fill('#replace-link', 'https://vimeo.com/123');
+    await page.click('#replace-btn');
+    await expect(page.locator('#replace-error')).toHaveText('That link isn’t supported — paste a YouTube or Instagram link.');
+    expect(deleted).toBe(false);
+  });
+});
+
+test.describe('Replace — link with file', () => {
+  let linkFx;
+  test.beforeAll(async () => { linkFx = await setupLinkMovementFixture(COACH_EMAIL, COACH_PASSWORD); });
+  test.afterAll(async () => { await teardownLinkMovementFixture(linkFx?.client, linkFx?.id); });
+
+  test('replacing a link with a file clears the link columns', async ({ page }) => {
+    let patch = null;
+    await page.route('https://www.youtube-nocookie.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '' }));
+    await page.route('**/functions/v1/r2-upload-url', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ uploadUrl: 'http://localhost:8080/__upload' }) }));
+    await page.route('http://localhost:8080/__upload', r => r.fulfill({ status: 200, body: '' }));
+    await page.route('**/functions/v1/r2-signed-url', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ signedUrl: 'http://localhost:8080/img/logo.png' }) }));
+    await page.route('**/rest/v1/movements**', async r => {
+      if (r.request().method() === 'PATCH') { patch = r.request().postDataJSON(); await r.fulfill({ status: 204, body: '' }); }
+      else await r.continue();
+    });
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+    await page.goto(`/movement.html?id=${linkFx.id}&edit=1`);
+    await page.setInputFiles('#replace-file', { name: 'new.mp4', mimeType: 'video/mp4', buffer: Buffer.from('fake') });
+    await expect(page.locator('#replace-link')).toHaveValue('');
+    await page.click('#replace-btn');
+    await expect(page.locator('#replace-success')).toHaveText('File replaced successfully.');
+    expect(patch).toMatchObject({
+      source_url: null, source_author: null, clip_start: null, clip_end: null,
+      download_status: null, download_attempts: 0, download_error: null,
+    });
+    expect(patch.video_path).toMatch(/^[0-9a-f-]{36}\.mp4$/);
+  });
+
+  test('changing the part of a link: the edit page pre-fills it, Replace saves the new part', async ({ page }) => {
+    let patch = null;
+    await linkFx.client.from('movements').update({ clip_start: 69, clip_end: 99 }).eq('id', linkFx.id);
+    await page.route('https://www.youtube-nocookie.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '' }));
+    await page.route('https://www.youtube.com/oembed**', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ title: 'T', author_name: "Pierre's Elite Performance" }) }));
+    await page.route('**/rest/v1/movements**', async r => {
+      if (r.request().method() === 'PATCH') { patch = r.request().postDataJSON(); await r.fulfill({ status: 204, body: '' }); }
+      else await r.continue();
+    });
+    try {
+      await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+      await page.goto(`/movement.html?id=${linkFx.id}&edit=1`);
+      await expect(page.locator('#replace-link')).toHaveValue('https://www.youtube.com/watch?v=4taYjKlmihU');
+      await expect(page.locator('input[name="clip-mode"][value="part"]')).toBeChecked();
+      await expect(page.locator('#clip-start')).toHaveValue('1:09');
+      await page.fill('#clip-end', '1:49');
+      await page.click('#replace-btn');
+      await expect.poll(() => patch).toMatchObject({ clip_start: 69, clip_end: 109, download_status: 'pending' });
+    } finally {
+      await linkFx.client.from('movements').update({ clip_start: null, clip_end: null }).eq('id', linkFx.id);
+    }
+  });
 });

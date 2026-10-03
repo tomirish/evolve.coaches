@@ -193,20 +193,26 @@ async function renderEdit() {
     </form>
 
     <section class="admin-section" style="margin-top: 2rem;">
-      <h2 class="admin-section-title">Replace File</h2>
+      <h2 class="admin-section-title">Replace Video</h2>
       <div id="replace-error" class="error hidden"></div>
       <div id="replace-success" class="success hidden"></div>
       <div class="file-drop" id="replace-drop">
         <input type="file" id="replace-file" accept="video/*,image/*">
         <p id="replace-label">Tap to select a replacement file</p>
       </div>
+      <div class="link-paste" style="margin-top: 0.75rem;">
+        <label for="replace-link" class="link-paste-label">…or paste a YouTube or Instagram link</label>
+        <input type="url" id="replace-link" placeholder="https://www.instagram.com/reel/…" inputmode="url" autocomplete="off"
+               value="${movement.source_url ? escape(movement.source_url) : ''}">
+      </div>
+      ${clipFieldsHtml(movementClip(movement), null)}
       <div class="progress-wrap hidden" id="replace-progress-wrap">
         <div class="progress-bar">
           <div class="progress-fill" id="replace-progress-fill"></div>
         </div>
         <p class="progress-text" id="replace-progress-text">Uploading…</p>
       </div>
-      <button type="button" class="btn btn-primary" id="replace-btn" style="margin-top: 1rem;">Replace File</button>
+      <button type="button" class="btn btn-primary" id="replace-btn" style="margin-top: 1rem;">Replace</button>
     </section>
 
     ${isAdmin ? `<button type="button" class="btn btn-danger" id="delete-btn" style="margin-top: 0.5rem;">Delete Movement</button>` : ''}
@@ -229,8 +235,10 @@ async function renderEdit() {
     }
     document.getElementById('replace-error').classList.add('hidden');
     document.getElementById('replace-label').textContent = file.name;
+    document.getElementById('replace-link').value = '';
   });
   document.getElementById('replace-btn').addEventListener('click', replaceVideo);
+  bindClipFields(result => { replaceClip = result; });
   if (isAdmin) {
     document.getElementById('delete-btn').addEventListener('click', deleteMovement);
   }
@@ -308,6 +316,7 @@ async function saveChanges(e) {
 // ── Replace video ────────────────────────────────────────────
 async function replaceVideo() {
   const file          = document.getElementById('replace-file').files[0];
+  const rawLink       = document.getElementById('replace-link').value.trim();
   const replaceError  = document.getElementById('replace-error');
   const replaceSuccess= document.getElementById('replace-success');
   const replaceBtn    = document.getElementById('replace-btn');
@@ -318,8 +327,10 @@ async function replaceVideo() {
   replaceError.classList.add('hidden');
   replaceSuccess.classList.add('hidden');
 
+  if (rawLink) { await replaceWithLink(rawLink); return; }
+
   if (!file) {
-    replaceError.textContent = 'Please select a file.';
+    replaceError.textContent = 'Please select a file or paste a link.';
     replaceError.classList.remove('hidden');
     return;
   }
@@ -341,7 +352,7 @@ async function replaceVideo() {
     replaceError.textContent = 'Upload failed. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
-    replaceBtn.textContent = 'Replace File';
+    replaceBtn.textContent = 'Replace';
     progressWrap.classList.add('hidden');
     progressFill.style.width = '0%';
     return;
@@ -356,7 +367,7 @@ async function replaceVideo() {
     replaceError.textContent = 'Upload failed. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
-    replaceBtn.textContent = 'Replace File';
+    replaceBtn.textContent = 'Replace';
     progressWrap.classList.add('hidden');
     progressFill.style.width = '0%';
     return;
@@ -364,30 +375,45 @@ async function replaceVideo() {
 
   const oldPath = movement.video_path;
 
-  // Delete old file before updating DB so the path check in r2-delete passes.
-  // Non-fatal — if it fails, the orphan becomes inaccessible once the DB points to the new file.
-  await callEdgeFunction('r2-delete', { path: oldPath, movementId: id });
+  if (oldPath) {
+    // Delete old file before updating DB so the path check in r2-delete passes.
+    // Non-fatal — if it fails, the orphan becomes inaccessible once the DB points to the new file.
+    await callEdgeFunction('r2-delete', { path: oldPath, movementId: id });
+  }
 
   const { error: dbError } = await client
     .from('movements')
-    .update({ video_path: filename })
+    .update({
+      video_path: filename,
+      source_url: null, source_author: null, clip_start: null, clip_end: null,
+      download_status: null, download_attempts: 0, download_error: null,
+    })
     .eq('id', id);
 
   if (dbError) {
     replaceError.textContent = 'Failed to save. Please try again.';
     replaceError.classList.remove('hidden');
     replaceBtn.disabled    = false;
-    replaceBtn.textContent = 'Replace File';
+    replaceBtn.textContent = 'Replace';
     progressWrap.classList.add('hidden');
     progressFill.style.width = '0%';
     return;
   }
 
   movement.video_path = filename;
+  const wasLink = !!movement.link;
+  Object.assign(movement, { source_url: null, source_author: null, clip_start: null, clip_end: null, download_status: null, link: null });
 
   const signed = await callEdgeFunction('r2-signed-url', { path: movement.video_path });
   if (signed && signed.signedUrl) {
     movement.signedUrl = signed.signedUrl;
+    if (wasLink) {
+      await renderEdit();
+      const success = document.getElementById('replace-success');
+      success.textContent = 'File replaced successfully.';
+      success.classList.remove('hidden');
+      return;
+    }
     const videoEl = document.querySelector('#video-player source');
     if (videoEl) {
       videoEl.src = signed.signedUrl;
@@ -400,11 +426,66 @@ async function replaceVideo() {
   progressWrap.classList.add('hidden');
   progressFill.style.width = '0%';
   replaceBtn.disabled    = false;
-  replaceBtn.textContent = 'Replace File';
+  replaceBtn.textContent = 'Replace';
   document.getElementById('replace-file').value = '';
   document.getElementById('replace-label').textContent = 'Tap to select a replacement file';
   replaceSuccess.textContent = 'File replaced successfully.';
   replaceSuccess.classList.remove('hidden');
+}
+
+let replaceClip = { clip: null, error: null };   // latest validateClip() from the edit page
+
+async function replaceWithLink(rawLink) {
+  const replaceError   = document.getElementById('replace-error');
+  const replaceBtn     = document.getElementById('replace-btn');
+
+  const link = parseVideoLink(rawLink);
+  if (!link) {
+    replaceError.textContent = 'That link isn’t supported — paste a YouTube or Instagram link.';
+    replaceError.classList.remove('hidden');
+    return;
+  }
+
+  if (replaceClip.error) {
+    replaceError.textContent = replaceClip.error;
+    replaceError.classList.remove('hidden');
+    return;
+  }
+
+  replaceBtn.disabled    = true;
+  replaceBtn.textContent = 'Saving…';
+
+  const info   = link.platform === 'youtube' ? await fetchYouTubeInfo(link.canonicalUrl) : null;
+  const author = (info && info.author) || null;
+
+  // Same order as the file replace: r2-delete checks the path against the row,
+  // so it must run before the row stops pointing at the file.
+  if (movement.video_path) {
+    await callEdgeFunction('r2-delete', { path: movement.video_path, movementId: id });
+  }
+
+  const patch = {
+    video_path: null, source_url: link.canonicalUrl, source_author: author,
+    clip_start: replaceClip.clip ? replaceClip.clip.start : null,
+    clip_end:   replaceClip.clip ? replaceClip.clip.end : null,
+    download_status: 'pending', download_attempts: 0, download_error: null,
+  };
+  const { error } = await client.from('movements').update(patch).eq('id', id);
+
+  replaceBtn.disabled    = false;
+  replaceBtn.textContent = 'Replace';
+
+  if (error) {
+    replaceError.textContent = 'Failed to save. Please try again.';
+    replaceError.classList.remove('hidden');
+    return;
+  }
+
+  Object.assign(movement, patch, { link });
+  await renderEdit();
+  const success = document.getElementById('replace-success');
+  success.textContent = 'Replaced with the link. A copy will be saved automatically.';
+  success.classList.remove('hidden');
 }
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500 MB

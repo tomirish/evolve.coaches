@@ -13,7 +13,7 @@ async function loadTags() {
 
   const [tagsResult, movementsResult] = await Promise.all([
     client.from('tags').select('id, name').order('name'),
-    client.from('movements').select('tags'),
+    client.from('movements').select('tags').is('archived_at', null),
   ]);
 
   if (tagsResult.error) {

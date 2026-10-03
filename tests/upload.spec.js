@@ -397,6 +397,27 @@ test.describe('Upload page — paste a link', () => {
     await expect(page.locator('#single-mode')).toBeHidden();
   });
 
+  test('changing a valid link to an unsupported one returns to the empty state', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    const inserted = await captureMovementInsert(page);
+    await page.fill('#video-link', YT_LINK);
+    await expect(page.locator('#single-mode')).toBeVisible();
+    await page.fill('#video-link', 'https://www.tiktok.com/@x/video/123');
+    await expect(page.locator('#link-error')).toHaveText('That link isn’t supported — paste a YouTube or Instagram link.');
+    await expect(page.locator('#link-error')).toBeVisible();
+    await expect(page.locator('#single-mode')).toBeHidden();
+    expect(inserted()).toBeNull();
+  });
+
+  test('link input is styled like other inputs', async ({ page }) => {
+    await page.goto('/upload.html');
+    const s = await page.locator('#video-link').evaluate(e => { const c = getComputedStyle(e); return { w: e.offsetWidth, p: c.paddingLeft, b: c.borderTopWidth }; });
+    expect(s.p).toBe('14px');
+    expect(s.b).toBe('1px');
+    expect(s.w).toBeGreaterThan(200);
+  });
+
   test('saving a link inserts a pending movement with the canonical URL', async ({ page }) => {
     await stubLinkServices(page);
     await page.goto('/upload.html');

@@ -281,6 +281,7 @@ linkInput.addEventListener('input', () => {
 
   const link = parseVideoLink(raw);
   if (!link) {
+    if (currentLink) { const v = linkInput.value; resetToEmpty(); linkInput.value = v; }
     linkError.textContent = 'That link isn’t supported — paste a YouTube or Instagram link.';
     linkError.classList.remove('hidden');
     return;

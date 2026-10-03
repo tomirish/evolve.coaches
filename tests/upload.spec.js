@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { loginAs } = require('./helpers/login');
+const { setupLinkMovementFixture, teardownLinkMovementFixture } = require('./helpers/fixtures');
 
 const COACH_EMAIL    = process.env.COACH_EMAIL;
 const COACH_PASSWORD = process.env.COACH_PASSWORD;
@@ -331,4 +332,172 @@ test.describe('Upload page', () => {
     await expect(page.locator('.bulk-status-error').first()).toBeVisible({ timeout: 10000 });
   });
 
+});
+
+const YT_LINK = 'https://youtu.be/4taYjKlmihU?is=YQq_o7bc6RAaqnx7';
+const IG_LINK = 'https://www.instagram.com/p/DdFIrIfk0W2/?stkn=MWxrN3ZjaTBreG0xag==';
+
+async function stubLinkServices(page, { oembed = 200 } = {}) {
+  await page.route('https://www.youtube-nocookie.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<html></html>' }));
+  await page.route('https://www.instagram.com/**', r => r.fulfill({ status: 200, contentType: 'text/html', body: '<html></html>' }));
+  await page.route('https://www.youtube.com/oembed**', r => oembed === 200
+    ? r.fulfill({ status: 200, contentType: 'application/json',
+        body: JSON.stringify({ title: 'Fast Footwork & Agility Ladder Drills | Speed & Agility Performance', author_name: "Pierre's Elite Performance" }) })
+    : r.fulfill({ status: oembed, body: '' }));
+}
+
+// Intercept the INSERT so no 'pending' row ever reaches the live database
+// (the NAS worker would try to copy it). Returns a getter for the posted body.
+async function captureMovementInsert(page) {
+  let body = null;
+  await page.route('**/rest/v1/movements**', async route => {
+    if (route.request().method() === 'POST') {
+      body = route.request().postDataJSON();
+      await route.fulfill({ status: 201, body: '' });
+    } else {
+      await route.continue();
+    }
+  });
+  return () => body;
+}
+
+test.describe('Upload page — paste a link', () => {
+  test.beforeEach(async ({ page }) => {
+    await loginAs(page, COACH_EMAIL, COACH_PASSWORD);
+  });
+
+  test('link field is visible under the drop zone', async ({ page }) => {
+    await page.goto('/upload.html');
+    await expect(page.locator('label[for="video-link"]')).toHaveText('…or paste a YouTube or Instagram link');
+  });
+
+  test('pasting a YouTube link shows the embed and suggests a name', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    await page.fill('#video-link', YT_LINK);
+    await expect(page.locator('#single-mode')).toBeVisible();
+    await expect(page.locator('#single-embed iframe')).toHaveAttribute('src', /youtube-nocookie\.com\/embed\/4taYjKlmihU/);
+    await expect(page.locator('#name')).toHaveValue('Fast Footwork & Agility Ladder Drills');
+    await expect(page.locator('#name-ocr-hint')).toHaveText('Suggested from the YouTube title — edit if needed.');
+    await expect(page.locator('#submit-btn')).toHaveText('Save Movement');
+  });
+
+  test('pasting an Instagram link leaves the name blank', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    await page.fill('#video-link', IG_LINK);
+    await expect(page.locator('#single-embed iframe')).toHaveAttribute('src', 'https://www.instagram.com/p/DdFIrIfk0W2/embed/');
+    await expect(page.locator('#name')).toHaveValue('');
+  });
+
+  test('an unsupported link shows a friendly error and no form', async ({ page }) => {
+    await page.goto('/upload.html');
+    await page.fill('#video-link', 'https://www.tiktok.com/@x/video/123');
+    await expect(page.locator('#link-error')).toHaveText('That link isn’t supported — paste a YouTube or Instagram link.');
+    await expect(page.locator('#single-mode')).toBeHidden();
+  });
+
+  test('saving a link inserts a pending movement with the canonical URL', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    const inserted = await captureMovementInsert(page);
+    await page.fill('#video-link', YT_LINK);
+    await expect(page.locator('#name')).toHaveValue('Fast Footwork & Agility Ladder Drills');
+    await page.click('#submit-btn');
+    await page.waitForURL('**/catalog.html');
+    expect(inserted()).toMatchObject({
+      name: 'Fast Footwork & Agility Ladder Drills',
+      video_path: null,
+      source_url: 'https://www.youtube.com/watch?v=4taYjKlmihU',
+      source_author: "Pierre's Elite Performance",
+      clip_start: null,
+      clip_end: null,
+      download_status: 'pending',
+    });
+  });
+
+  test('Whole video is the default; choosing a part shows Start/End and its length', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    await page.fill('#video-link', YT_LINK);
+    await expect(page.locator('input[name="clip-mode"][value="whole"]')).toBeChecked();
+    await expect(page.locator('#clip-times')).toBeHidden();
+    await page.check('input[name="clip-mode"][value="part"]');
+    await page.fill('#clip-start', '1:09');
+    await page.fill('#clip-end', '1:39');
+    await expect(page.locator('#clip-note')).toHaveText('30 seconds');
+    await expect(page.locator('#single-embed iframe')).toHaveAttribute('src', /&start=69&end=99$/);
+  });
+
+  test('saving a part stores clip_start and clip_end', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    const inserted = await captureMovementInsert(page);
+    await page.fill('#video-link', YT_LINK);
+    await expect(page.locator('#name')).toHaveValue('Fast Footwork & Agility Ladder Drills');
+    await page.check('input[name="clip-mode"][value="part"]');
+    await page.fill('#clip-start', '1:09');
+    await page.fill('#clip-end', '1:39');
+    await page.click('#submit-btn');
+    await page.waitForURL('**/catalog.html');
+    expect(inserted()).toMatchObject({ clip_start: 69, clip_end: 99, download_status: 'pending' });
+  });
+
+  test('an invalid part blocks Save with an inline message', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    const inserted = await captureMovementInsert(page);
+    await page.fill('#video-link', YT_LINK);
+    await page.check('input[name="clip-mode"][value="part"]');
+    await page.fill('#clip-start', '1:39');
+    await page.fill('#clip-end', '1:09');
+    await expect(page.locator('#clip-note')).toHaveText('End must be after Start.');
+    await expect(page.locator('#submit-btn')).toBeDisabled();
+    expect(inserted()).toBeNull();
+  });
+
+  test('a YouTube link with ?t= pre-fills Start but stays on Whole video', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    await page.fill('#video-link', 'https://youtu.be/4taYjKlmihU?t=69');
+    await expect(page.locator('input[name="clip-mode"][value="whole"]')).toBeChecked();
+    await page.check('input[name="clip-mode"][value="part"]');
+    await expect(page.locator('#clip-start')).toHaveValue('1:09');
+  });
+
+  test('oEmbed failing never blocks saving', async ({ page }) => {
+    await stubLinkServices(page, { oembed: 500 });
+    await page.goto('/upload.html');
+    const inserted = await captureMovementInsert(page);
+    await page.fill('#video-link', YT_LINK);
+    await page.fill('#name', 'Ladder Drill');
+    await page.click('#submit-btn');
+    await page.waitForURL('**/catalog.html');
+    expect(inserted()).toMatchObject({ name: 'Ladder Drill', source_author: null, download_status: 'pending' });
+  });
+
+  test('choosing a file after a link clears the link', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    await page.fill('#video-link', YT_LINK);
+    await expect(page.locator('#single-embed iframe')).toBeVisible();
+    await mockFrameExtraction(page);
+    await mockVisionName(page, 'Goblet Squat');
+    await page.setInputFiles('#video-file', FAKE_VIDEO);
+    await expect(page.locator('#video-link')).toHaveValue('');
+    await expect(page.locator('#single-embed')).toBeHidden();
+    await expect(page.locator('#submit-btn')).toHaveText('Upload Movement');
+  });
+
+  test('a link already in the library shows a duplicate warning', async ({ page }) => {
+    const fx = await setupLinkMovementFixture(COACH_EMAIL, COACH_PASSWORD);
+    try {
+      await stubLinkServices(page);
+      await page.goto('/upload.html');
+      await page.fill('#video-link', YT_LINK);
+      await expect(page.locator('#link-warning')).toHaveText('This link is already saved as "__test_link_fixture__" — check the catalog before saving.');
+    } finally {
+      await teardownLinkMovementFixture(fx.client, fx.id);
+    }
+  });
 });

@@ -20,6 +20,11 @@ const pillGroup    = document.getElementById('pill-group');
 const progressWrap = document.getElementById('progress-wrap');
 const progressFill = document.getElementById('progress-fill');
 const progressText = document.getElementById('progress-text');
+const linkInput    = document.getElementById('video-link');
+const linkError    = document.getElementById('link-error');
+const linkWarning  = document.getElementById('link-warning');
+const singleEmbed  = document.getElementById('single-embed');
+const clipSlot     = document.getElementById('clip-slot');
 
 // ── Bulk mode elements ────────────────────────────────────────────────────────
 const bulkQueueEl   = document.getElementById('bulk-queue');
@@ -35,6 +40,10 @@ let allTags       = [];
 
 // ── Single mode state ─────────────────────────────────────────────────────────
 let ocrFilledName = false;
+let singleFile    = null;
+let currentLink = null;   // parsed link when the coach pasted one instead of a file
+let linkAuthor  = null;   // YouTube oEmbed author_name, saved as source_author
+let linkClip    = { clip: null, error: null };   // latest validateClip() result
 const MAX_FILE_SIZE = 500 * 1024 * 1024;
 
 // ── Bulk mode state ───────────────────────────────────────────────────────────
@@ -224,6 +233,7 @@ fileDropEl.addEventListener('drop', async (e) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function activateSingle(file) {
+  clearLink();
   if (currentMode === 'bulk') {
     queue = [];
     bulkQueueEl.innerHTML = '';
@@ -263,6 +273,136 @@ async function activateSingle(file) {
   suggestMovementName(file);
 }
 
+// ── Link mode ─────────────────────────────────────────────────────────────────
+linkInput.addEventListener('input', () => {
+  const raw = linkInput.value.trim();
+  linkError.classList.add('hidden');
+  if (!raw) { if (currentLink) resetToEmpty(); return; }
+
+  const link = parseVideoLink(raw);
+  if (!link) {
+    linkError.textContent = 'That link isn’t supported — paste a YouTube or Instagram link.';
+    linkError.classList.remove('hidden');
+    return;
+  }
+  if (currentLink && currentLink.canonicalUrl === link.canonicalUrl) return;
+  activateLink(link);
+});
+
+function activateLink(link) {
+  if (currentMode === 'bulk') {
+    queue = [];
+    bulkQueueEl.innerHTML = '';
+    bulkMode.classList.add('hidden');
+    mainPage.classList.remove('page-wide');
+  }
+  currentMode = 'single';
+  singleFile  = null;
+  fileInput.value       = '';
+  fileLabel.textContent = 'Drop videos or photos here or click to browse';
+  currentLink = link;
+  linkAuthor  = null;
+
+  singleMode.classList.remove('hidden');
+  fileAiHint.classList.add('hidden');
+  errorMsg.classList.add('hidden');
+  document.getElementById('single-preview').classList.add('hidden');
+  singleEmbed.innerHTML = embedHtml(link, 'Preview', null);
+  singleEmbed.classList.remove('hidden');
+
+  // Whole video by default; YouTube's t= only pre-fills Start.
+  linkClip = { clip: null, error: null };
+  clipSlot.innerHTML = clipFieldsHtml(null, link.startSeconds);
+  clipSlot.classList.remove('hidden');
+  bindClipFields(result => {
+    const changed = JSON.stringify(result.clip) !== JSON.stringify(linkClip.clip);
+    linkClip = result;
+    submitBtn.disabled = !!result.error;
+    // Re-render the preview only when the playable part actually changes.
+    if (changed && link.platform === 'youtube') singleEmbed.innerHTML = embedHtml(link, 'Preview', result.clip);
+  });
+  if (ocrFilledName) { nameInput.value = ''; ocrFilledName = false; }
+  nameOcrHint.classList.add('hidden');
+
+  submitBtn.disabled    = false;
+  submitBtn.textContent = 'Save Movement';
+
+  checkDuplicateLink(link);
+  if (link.platform === 'youtube') suggestNameFromYouTube(link);
+}
+
+function clearLink() {
+  if (!currentLink && !linkInput.value) return;
+  currentLink = null;
+  linkAuthor  = null;
+  linkInput.value = '';
+  linkError.classList.add('hidden');
+  linkWarning.classList.add('hidden');
+  singleEmbed.innerHTML = '';
+  singleEmbed.classList.add('hidden');
+  clipSlot.innerHTML = '';
+  clipSlot.classList.add('hidden');
+  linkClip = { clip: null, error: null };
+  submitBtn.disabled    = false;
+  submitBtn.textContent = 'Upload Movement';
+}
+
+function resetToEmpty() {
+  clearLink();
+  singleMode.classList.add('hidden');
+  fileAiHint.classList.remove('hidden');
+}
+
+async function suggestNameFromYouTube(link) {
+  const info = await fetchYouTubeInfo(link.canonicalUrl);
+  if (!info || currentLink !== link) return;   // coach moved on
+  linkAuthor = info.author || null;
+  const suggested = nameFromYouTubeTitle(info.title);
+  if (suggested && (!nameInput.value.trim() || ocrFilledName)) {
+    nameInput.value = suggested;
+    ocrFilledName   = true;
+    nameOcrHint.textContent = 'Suggested from the YouTube title — edit if needed.';
+    nameOcrHint.classList.remove('hidden');
+  }
+}
+
+async function checkDuplicateLink(link) {
+  linkWarning.classList.add('hidden');
+  const { data } = await client.from('movements').select('name')
+    .eq('source_url', link.canonicalUrl).is('archived_at', null).limit(1);
+  if (data && data.length > 0 && currentLink === link) {
+    linkWarning.textContent = `This link is already saved as "${data[0].name}" — check the catalog before saving.`;
+    linkWarning.classList.remove('hidden');
+  }
+}
+
+async function submitLink({ name, alt_names, tags, comments }) {
+  if (linkClip.error) { showSingleError(linkClip.error); return; }
+  submitBtn.disabled    = true;
+  submitBtn.textContent = 'Saving…';
+  errorMsg.classList.add('hidden');
+
+  const session = await getSession();
+  const { error } = await client.from('movements').insert({
+    name, alt_names, tags, comments: comments || null,
+    video_path:      null,
+    source_url:      currentLink.canonicalUrl,
+    source_author:   linkAuthor,
+    clip_start:      linkClip.clip ? linkClip.clip.start : null,
+    clip_end:        linkClip.clip ? linkClip.clip.end : null,
+    download_status: 'pending',
+    uploaded_by:     session.user.id,
+  });
+
+  if (error) {
+    showSingleError('Failed to save movement. Please try again.');
+    submitBtn.disabled    = false;
+    submitBtn.textContent = 'Save Movement';
+    return;
+  }
+  window.location.href = 'catalog.html';
+}
+
 // ── Duplicate name check ──────────────────────────────────────────────────────
 nameInput.addEventListener('input', () => {
   ocrFilledName = false;
@@ -295,6 +435,7 @@ form.addEventListener('submit', async (e) => {
   ).map(cb => cb.value);
 
   if (!name) { showSingleError('Movement name is required.'); return; }
+  if (currentLink) { await submitLink({ name, alt_names, tags, comments }); return; }
   if (!file)  { showSingleError('Please select a file.'); return; }
   if (file.size > MAX_FILE_SIZE) { showSingleError('File is too large. Maximum size is 500 MB.'); return; }
 
@@ -336,8 +477,6 @@ form.addEventListener('submit', async (e) => {
 });
 
 // ── Single mode OCR ───────────────────────────────────────────────────────────
-let singleFile = null;
-
 async function suggestMovementName(file) {
   singleFile = file;
   nameOcrHint.textContent = 'Detecting movement name…';
@@ -414,6 +553,7 @@ async function loadTags() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 function activateBulk(files) {
+  clearLink();
   if (currentMode !== 'bulk') {
     currentMode = 'bulk';
     fileDropEl.classList.add('compact');

@@ -408,6 +408,21 @@ body {
   padding: 1rem 2rem;
 }
 
+.link-paste {
+  margin: -0.5rem 0 1.25rem;
+}
+
+.link-paste-label {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  margin-bottom: 0.375rem;
+}
+
+.link-paste .error {
+  margin-top: 0.5rem;
+}
+
 .single-preview {
   position: relative;
   display: block;
@@ -774,6 +789,8 @@ body {
 }
 
 .clip-mode label { display: flex; align-items: center; gap: 0.375rem; font-weight: normal; }
+/* undo the generic .field input box styling for the radios */
+.clip-mode input { width: auto; padding: 0; border: 0; }
 
 .clip-times {
   display: flex;

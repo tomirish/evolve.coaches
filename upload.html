@@ -38,8 +38,20 @@
       <p id="file-ai-hint" style="font-size:0.8rem;margin-top:0.375rem;">AI will suggest a movement name for each file.</p>
     </div>
 
+    <!-- Paste a link instead of a file (one per upload) -->
+    <div class="link-paste" id="link-paste">
+      <label for="video-link" class="link-paste-label">…or paste a YouTube or Instagram link</label>
+      <input type="url" id="video-link" placeholder="https://www.instagram.com/reel/…" inputmode="url" autocomplete="off">
+      <div id="link-error" class="error hidden"></div>
+    </div>
+
     <!-- ── Single mode (hidden until a single file is selected) ── -->
     <div id="single-mode" class="hidden">
+
+      <!-- Embed preview + part chooser (link mode) -->
+      <div id="single-embed" class="hidden"></div>
+      <div id="link-warning" class="warning hidden"></div>
+      <div id="clip-slot" class="hidden"></div>
 
       <!-- Video preview (shown after frame is captured) -->
       <div id="single-preview" class="single-preview hidden">

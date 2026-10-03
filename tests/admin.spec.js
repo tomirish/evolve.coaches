@@ -1,5 +1,6 @@
 const { test, expect } = require('@playwright/test');
 const { loginAs } = require('./helpers/login');
+const { setupLinkMovementFixture, teardownLinkMovementFixture } = require('./helpers/fixtures');
 
 const ADMIN_EMAIL    = process.env.ADMIN_EMAIL;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -51,4 +52,56 @@ test('tag search filters the list', async ({ page }) => {
   // Clearing restores the list
   await page.fill('#tag-search', '');
   await expect(page.locator('#group-list .admin-list-item')).not.toHaveCount(0);
+});
+
+test.describe('Videos tab — pasted links', () => {
+  let failedFx;
+  test.beforeAll(async () => {
+    failedFx = await setupLinkMovementFixture(COACH_EMAIL, COACH_PASSWORD, {
+      name: '__test_link_failed__', download_status: 'failed', download_attempts: 3, download_error: 'HTTP Error 429',
+    });
+  });
+  test.afterAll(async () => { await teardownLinkMovementFixture(failedFx?.client, failedFx?.id); });
+
+  async function openRow(page) {
+    await loginAs(page, ADMIN_EMAIL, ADMIN_PASSWORD);
+    await page.goto('/admin.html');
+    await page.locator('.admin-tab[data-tab="videos"]').click();
+    await page.fill('#movement-search', '__test_link_failed__');
+    return page.locator(`.admin-list-item[data-id="${failedFx.id}"]`);
+  }
+
+  test('failed link row shows a Copy failed badge with the reason', async ({ page }) => {
+    const row = await openRow(page);
+    const badge = row.locator('.download-badge');
+    await expect(badge).toHaveText('Copy failed');
+    await expect(badge).toHaveAttribute('title', 'HTTP Error 429');
+  });
+
+  test('link row thumbnail is the YouTube still and opens the movement page', async ({ page }) => {
+    const row = await openRow(page);
+    await expect(row.locator('.admin-thumb-link img')).toHaveAttribute('src', 'https://i.ytimg.com/vi/4taYjKlmihU/hqdefault.jpg');
+    await expect(row.locator('.admin-thumb-link')).toHaveAttribute('href', `movement.html?id=${failedFx.id}`);
+  });
+
+  test('Retry resets the row to pending', async ({ page }) => {
+    let patch = null;
+    // Intercepted: a real 'pending' write would be picked up by the NAS worker.
+    await page.route('**/rest/v1/movements**', async r => {
+      if (r.request().method() === 'PATCH') { patch = r.request().postDataJSON(); await r.fulfill({ status: 204, body: '' }); }
+      else await r.continue();
+    });
+    const row = await openRow(page);
+    await row.locator('[data-download-action="retry"]').click();
+    await expect.poll(() => patch).toEqual({ download_status: 'pending', download_attempts: 0, download_error: null });
+  });
+
+  test('Keep as link only stops the alert and the badge changes', async ({ page }) => {
+    const row = await openRow(page);
+    await row.locator('[data-download-action="link_only"]').click();
+    await expect(page.locator(`.admin-list-item[data-id="${failedFx.id}"] .download-badge`)).toHaveText('Link only');
+    const { data } = await failedFx.client.from('movements').select('download_status').eq('id', failedFx.id).single();
+    expect(data.download_status).toBe('link_only');
+    await failedFx.client.from('movements').update({ download_status: 'failed' }).eq('id', failedFx.id); // restore for reruns
+  });
 });

@@ -31,7 +31,7 @@ async function loadMovements() {
 
   const { data, error } = await client
     .from('movements')
-    .select('id, name, video_path, created_at, uploaded_by')
+    .select('id, name, video_path, source_url, download_status, download_error, created_at, uploaded_by')
     .is('archived_at', null)
     .order('created_at', { ascending: false });
 
@@ -86,19 +86,44 @@ function renderMovements(data) {
   }
 }
 
+const DOWNLOAD_BADGE = { pending: 'Saving copy…', failed: 'Copy failed', link_only: 'Link only' };
+
 function movementRowHtml(m) {
   const checked = selectedIds.has(m.id) ? 'checked' : '';
+  const link    = m.video_path ? null : parseVideoLink(m.source_url);
+
+  // A link with no R2 copy yet has nothing to sign — show the platform's still
+  // (YouTube) or a placeholder, and open the movement page instead of the modal.
+  const thumb = link
+    ? `<a class="admin-thumb admin-thumb-link" href="movement.html?id=${m.id}" data-thumb-loaded="1" title="Open movement">
+         ${link.platform === 'youtube'
+           ? `<img src="https://i.ytimg.com/vi/${link.id}/hqdefault.jpg" alt="">`
+           : '<span class="admin-thumb-platform">Instagram</span>'}
+       </a>`
+    : `<div class="admin-thumb" data-path="${escape(m.video_path)}" title="Preview file">
+         ${!isImagePath(m.video_path) ? '<div class="admin-thumb-play">&#9654;</div>' : ''}
+       </div>`;
+
+  const badgeText = DOWNLOAD_BADGE[m.download_status];
+  const badge = badgeText
+    ? `<span class="download-badge download-${m.download_status}"${m.download_error ? ` title="${escape(m.download_error)}"` : ''}>${badgeText}</span>`
+    : '';
+
+  const failedActions = m.download_status === 'failed'
+    ? `<button class="btn-sm" data-download-action="retry" data-id="${m.id}">Retry</button>
+       <button class="btn-sm" data-download-action="link_only" data-id="${m.id}">Keep as link only</button>`
+    : '';
+
   return `
     <li class="admin-list-item" data-id="${m.id}">
       <input type="checkbox" class="admin-row-check" data-id="${m.id}" ${checked}>
-      <div class="admin-thumb" data-path="${escape(m.video_path)}" title="Preview file">
-        ${!isImagePath(m.video_path) ? '<div class="admin-thumb-play">&#9654;</div>' : ''}
-      </div>
+      ${thumb}
       <div class="admin-item-body">
-        <div class="admin-user-name">${escape(m.name)}</div>
+        <div class="admin-user-name">${escape(m.name)} ${badge}</div>
         <div class="admin-item-date">Uploaded by ${escape(m.uploaderName)} · ${formatDate(m.created_at)}</div>
       </div>
       <div class="admin-user-actions">
+        ${failedActions}
         <button class="btn-sm" onclick="location.href='movement.html?id=${m.id}&edit=1'">Edit</button>
       </div>
     </li>
@@ -213,10 +238,26 @@ movementList.addEventListener('change', (e) => {
   updateArchiveBar();
 });
 
-movementList.addEventListener('click', (e) => {
+movementList.addEventListener('click', async (e) => {
+  const action = e.target.closest('[data-download-action]');
+  if (action) { await setDownloadState(action.dataset.id, action.dataset.downloadAction); return; }
   const thumb = e.target.closest('.admin-thumb');
-  if (thumb) { openAdminVideoModal(thumb.dataset.path); return; }
+  if (thumb && !thumb.classList.contains('admin-thumb-link')) openAdminVideoModal(thumb.dataset.path);
 });
+
+async function setDownloadState(movementId, action) {
+  const patch = action === 'retry'
+    ? { download_status: 'pending', download_attempts: 0, download_error: null }
+    : { download_status: 'link_only' };
+  movementErrorMsg.classList.add('hidden');
+  const { error } = await client.from('movements').update(patch).eq('id', movementId);
+  if (error) {
+    movementErrorMsg.textContent = 'Failed to update. Please try again.';
+    movementErrorMsg.classList.remove('hidden');
+    return;
+  }
+  loadMovements();
+}
 
 archiveBtn.addEventListener('click', async () => {
   const count = selectedIds.size;

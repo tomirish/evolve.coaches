@@ -378,8 +378,12 @@ async function suggestNameFromYouTube(link) {
 
 async function checkDuplicateLink(link) {
   linkWarning.classList.add('hidden');
+  // Newest first: several live rows can share a URL, and without an order
+  // Postgres returns any one of them (CI went red 2026-10-13 when a real
+  // movement reused the suite's test video and won over the fixture).
   const { data } = await client.from('movements').select('name')
-    .eq('source_url', link.canonicalUrl).is('archived_at', null).limit(1);
+    .eq('source_url', link.canonicalUrl).is('archived_at', null)
+    .order('created_at', { ascending: false }).limit(1);
   if (data && data.length > 0 && currentLink === link) {
     linkWarning.textContent = `This link is already saved as "${data[0].name}" — check the catalog before saving.`;
     linkWarning.classList.remove('hidden');

@@ -450,6 +450,19 @@ test.describe('Upload page — paste a link', () => {
     await expect(page.locator('#single-embed iframe')).toHaveAttribute('src', /&start=69&end=99$/);
   });
 
+  test('times typed without a colon (Android number pad) work and tidy up on leaving the box', async ({ page }) => {
+    await stubLinkServices(page);
+    await page.goto('/upload.html');
+    await page.fill('#video-link', YT_LINK);
+    await page.check('input[name="clip-mode"][value="part"]');
+    await page.fill('#clip-start', '109');
+    await page.fill('#clip-end', '1.39');
+    await expect(page.locator('#clip-note')).toHaveText('30 seconds');
+    await page.locator('#clip-end').blur();
+    await expect(page.locator('#clip-start')).toHaveValue('1:09');
+    await expect(page.locator('#clip-end')).toHaveValue('1:39');
+  });
+
   test('saving a part stores clip_start and clip_end', async ({ page }) => {
     await stubLinkServices(page);
     await page.goto('/upload.html');

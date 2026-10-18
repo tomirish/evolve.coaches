@@ -215,8 +215,11 @@ function nameFromYouTubeTitle(title) {
 // seconds in clip_start / clip_end. The 180 s cap matches the CHECK constraint.
 const MAX_CLIP_SECONDS = 180;
 
+// Android's number pad has no colon, so ". , space" also separate, and digits
+// alone read like a microwave timer: "69" is 69 seconds, "109" is 1:09.
 function parseClipTime(text) {
-  const t = String(text ?? '').trim();
+  let t = String(text ?? '').trim().replace(/[.,\s]+/g, ':');
+  if (/^\d{3,6}$/.test(t)) t = t.replace(/\B(?=(\d{2})+$)/g, ':');
   if (!/^\d+(:\d{1,2}){0,2}$/.test(t)) return null;
   const parts = t.split(':').map(Number);
   if (parts.slice(1).some(n => n > 59)) return null;
@@ -290,6 +293,11 @@ function bindClipFields(onChange) {
     note.classList.toggle('clip-error', usePart && !result.clip && !incomplete);
     onChange(result);
   };
+  // Tidy "109" to "1:09" once the coach leaves the box.
+  times.addEventListener('change', e => {
+    const sec = parseClipTime(e.target.value);
+    if (sec !== null) e.target.value = formatClipTime(sec);
+  });
   field.addEventListener('input', read);
   field.addEventListener('change', read);
   read();

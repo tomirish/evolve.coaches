@@ -99,8 +99,12 @@ test.describe('link and part helpers', () => {
       parseClipTime('1:09'), parseClipTime('69'), parseClipTime(' 0:05 '), parseClipTime('1:02:03'),
       parseClipTime('1:9'), parseClipTime('1:60'), parseClipTime('abc'), parseClipTime(''), parseClipTime('-5'),
       formatClipTime(69), formatClipTime(5), formatClipTime(3723),
+      // Android number pad: no colon key
+      parseClipTime('109'), parseClipTime('1.09'), parseClipTime('1,09'), parseClipTime('1 09'),
+      parseClipTime('10203'), parseClipTime('160'), parseClipTime('1..09'),
     ]);
-    expect(r).toEqual([69, 69, 5, 3723, 69, null, null, null, null, '1:09', '0:05', '1:02:03']);
+    expect(r).toEqual([69, 69, 5, 3723, 69, null, null, null, null, '1:09', '0:05', '1:02:03',
+      69, 69, 69, 69, 3723, null, 69]);
   });
 
   test('validateClip', async ({ page }) => {

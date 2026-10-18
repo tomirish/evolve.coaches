@@ -135,9 +135,14 @@ function parseVideoLink(raw) {
     m = path.match(/^(?:\/[A-Za-z0-9._]{1,30})?\/(p|reels?)\/([^/]+)\/?$/);
     if (!m || !/^[A-Za-z0-9_-]{5,40}$/.test(m[2])) return null;
     const kind = m[1] === 'p' ? 'p' : 'reel';
+    // A post with several photos/videos: img_index names the one the coach was
+    // on, and the NAS copies just that item. Item 1 is the bare URL. The embed
+    // ignores it and opens on item 1 until the copy lands.
+    const item = u.searchParams.get('img_index');
+    const itemQuery = kind === 'p' && /^([2-9]|1[0-9]|20)$/.test(item || '') ? `?img_index=${item}` : '';
     return {
       platform: 'instagram', id: m[2], kind,
-      canonicalUrl: `https://www.instagram.com/${kind}/${m[2]}/`,
+      canonicalUrl: `https://www.instagram.com/${kind}/${m[2]}/${itemQuery}`,
       startSeconds: null,
     };
   }

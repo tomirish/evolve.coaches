@@ -140,7 +140,19 @@ test.describe('video link constraints', () => {
     insertedIds.push(data.id);
   });
 
+  test('accepts the chosen item of an Instagram post as link_only', async () => {
+    const { data, error } = await linkClient.from('movements')
+      .insert(row({ source_url: 'https://www.instagram.com/p/DdFIrIfk0W2/?img_index=2', download_status: 'link_only' }))
+      .select('id').single();
+    expect(error).toBeNull();
+    insertedIds.push(data.id);
+  });
+
   for (const bad of [
+    'https://www.instagram.com/p/DdFIrIfk0W2/?img_index=1',      // item 1 is the bare URL
+    'https://www.instagram.com/p/DdFIrIfk0W2/?img_index=21',
+    'https://www.instagram.com/p/DdFIrIfk0W2/?img_index=2&x=1',
+    'https://www.instagram.com/reel/C1a2B3c4D5e/?img_index=2',   // reels hold one video
     'https://evil.example/watch?v=4taYjKlmihU',
     'https://www.youtube.com.evil.example/watch?v=4taYjKlmihU',
     'https://youtu.be/4taYjKlmihU',                       // not canonical

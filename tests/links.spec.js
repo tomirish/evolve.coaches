@@ -24,6 +24,13 @@ test.describe('link and part helpers', () => {
     ['https://instagram.com/reels/C1a2B3c4D5e', 'instagram', 'C1a2B3c4D5e', 'https://www.instagram.com/reel/C1a2B3c4D5e/', null],
     ['https://www.instagram.com/karasaundo/reel/C1a2B3c4D5e/?igsh=x', 'instagram', 'C1a2B3c4D5e', 'https://www.instagram.com/reel/C1a2B3c4D5e/', null],
     ['https://www.instagram.com/karasaundo/p/DdFIrIfk0W2/', 'instagram', 'DdFIrIfk0W2', 'https://www.instagram.com/p/DdFIrIfk0W2/', null],
+    // A post with several items: keep which one (2–20); item 1, junk and reels drop it
+    ['https://www.instagram.com/p/DdFIrIfk0W2/?img_index=2', 'instagram', 'DdFIrIfk0W2', 'https://www.instagram.com/p/DdFIrIfk0W2/?img_index=2', null],
+    ['https://www.instagram.com/p/DdFIrIfk0W2/?stkn=x&img_index=20', 'instagram', 'DdFIrIfk0W2', 'https://www.instagram.com/p/DdFIrIfk0W2/?img_index=20', null],
+    ['https://www.instagram.com/p/DdFIrIfk0W2/?img_index=1', 'instagram', 'DdFIrIfk0W2', 'https://www.instagram.com/p/DdFIrIfk0W2/', null],
+    ['https://www.instagram.com/p/DdFIrIfk0W2/?img_index=21', 'instagram', 'DdFIrIfk0W2', 'https://www.instagram.com/p/DdFIrIfk0W2/', null],
+    ['https://www.instagram.com/p/DdFIrIfk0W2/?img_index=2"><x', 'instagram', 'DdFIrIfk0W2', 'https://www.instagram.com/p/DdFIrIfk0W2/', null],
+    ['https://www.instagram.com/reel/C1a2B3c4D5e/?img_index=2', 'instagram', 'C1a2B3c4D5e', 'https://www.instagram.com/reel/C1a2B3c4D5e/', null],
     ['  https://youtu.be/4taYjKlmihU\n', 'youtube', '4taYjKlmihU', 'https://www.youtube.com/watch?v=4taYjKlmihU', null],
   ];
 
@@ -53,6 +60,18 @@ test.describe('link and part helpers', () => {
       expect(await page.evaluate(u => parseVideoLink(u), raw)).toBeNull();
     });
   }
+
+  test('a chosen item survives a round trip, and the embed stays on the post', async ({ page }) => {
+    const r = await page.evaluate(() => {
+      const ig = parseVideoLink('https://www.instagram.com/p/DdFIrIfk0W2/?img_index=2');
+      return [parseVideoLink(ig.canonicalUrl).canonicalUrl, embedUrl(ig, null), sourceLinkUrl(ig, null)];
+    });
+    expect(r).toEqual([
+      'https://www.instagram.com/p/DdFIrIfk0W2/?img_index=2',
+      'https://www.instagram.com/p/DdFIrIfk0W2/embed/',
+      'https://www.instagram.com/p/DdFIrIfk0W2/?img_index=2',
+    ]);
+  });
 
   test('embed URLs: whole video loops, a part starts and ends, Instagram ignores parts', async ({ page }) => {
     const r = await page.evaluate(() => {

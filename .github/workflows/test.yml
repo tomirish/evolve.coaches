@@ -20,6 +20,9 @@ permissions: {}
 jobs:
   test:
     runs-on: ubuntu-latest
+    # A healthy run is ~1.5 min. Without a cap a stalled step bills up to
+    # GitHub's 6-hour default.
+    timeout-minutes: 15
     permissions:
       contents: read
     env:
@@ -48,13 +51,24 @@ jobs:
           path: ~/.cache/ms-playwright
           key: playwright-${{ hashFiles('package-lock.json') }}
 
+      # NO --with-deps and no install-deps (2026-11-06, same finding as
+      # tom.irish): on this runner image they apt-install only font packages
+      # (CJK, Thai, unifont, Cyrillic X fonts), since Chromium's libraries ship
+      # with the image's own Chrome. That apt download is the run-time
+      # variance -- 0s or 81s depending on the mirror, once a 6+ minute stall
+      # in tom.irish. The tests use no screenshot comparisons and the site's
+      # fonts are Latin, so nothing used them. If the image ever loses a library
+      # Chromium needs, the tests fail loudly and nothing deploys. Each download
+      # try is cut off at 3 minutes and retried once.
       - name: Install Playwright browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install chromium --with-deps
-
-      - name: Install Playwright system deps
-        if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
+        timeout-minutes: 8
+        run: |
+          for attempt in 1 2; do
+            timeout 180 npx playwright install chromium && exit 0
+            echo "::warning::playwright install attempt $attempt timed out or failed"
+          done
+          exit 1
 
       - uses: 1password/install-cli-action@1a3160d5e9de1ae0803eaa08a88746f5ae3daa50 # @v4.1.0
 
@@ -67,6 +81,7 @@ jobs:
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       pages: write

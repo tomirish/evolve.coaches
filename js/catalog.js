@@ -21,13 +21,12 @@ sortBtn.textContent = SORT_LABELS[sortMode];
 
 // ── Fetch ────────────────────────────────────────────────────
 async function load() {
-  listEl.innerHTML = '<p class="status-msg">Loading…</p>';
-
   const [movementsResult, groupsResult] = await Promise.all([
     client.from('movements').select('id, name, tags, alt_names, created_at').is('archived_at', null).order('name'),
     client.from('tags').select('name').order('name')
   ]);
 
+  document.getElementById('catalog-loading').remove();
   if (movementsResult.error) {
     listEl.innerHTML = '<p class="status-msg error">Failed to load movements. Please refresh.</p>';
     return;
@@ -42,6 +41,7 @@ async function load() {
     });
   });
   renderFilterPills(groupsResult.data || []);
+  filterBar.hidden = false;
   render();
   initNav();
 }

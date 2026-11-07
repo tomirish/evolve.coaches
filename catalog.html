@@ -11,16 +11,15 @@
   <link rel="icon" type="image/png" href="img/favicon.png">
   <link rel="icon" type="image/svg+xml" href="img/icon.svg">
   <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;900&display=block" rel="stylesheet">
+  <link rel="preload" href="fonts/source-sans-pro-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/source-sans-pro-600.woff2" as="font" type="font/woff2" crossorigin>
   <script src="js/theme.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
   <header class="nav">
-    <a href="catalog.html" class="brand"><img src="img/favicon.png" class="brand-logo" alt=""><span class="brand-name">Evolve Coaches Video Library</span></a>
+    <a href="catalog.html" class="brand" aria-label="Evolve Coaches Video Library"><img src="img/favicon.png" class="brand-logo" alt=""><span class="brand-name">Evolve Coaches Video Library</span></a>
     <div class="nav-links">
       <a href="catalog.html" class="active">Catalog</a>
       <a href="upload.html">Upload</a>
@@ -35,7 +34,11 @@
       <button id="sort-btn" class="btn btn-sort" title="Toggle sort order">A–Z</button>
     </div>
 
-    <div class="filter-bar" id="filter-bar">
+    <!-- Loading sits where the pills will wrap, and the list starts empty, so nothing
+         visible moves when the tags arrive (layout shift was 0.12 on a phone). -->
+    <p class="status-msg" id="catalog-loading">Loading…</p>
+
+    <div class="filter-bar" id="filter-bar" hidden>
       <button class="filter-pill active" data-group="All">All</button>
     </div>
 

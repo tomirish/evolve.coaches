@@ -1,4 +1,34 @@
 /* ============================================================
+   FONTS — self-hosted Source Sans Pro (latin), preloaded in each page's <head>.
+   Google Fonts' stylesheet blocked first paint for ~1.7 s on a phone (2026-11-07).
+   Weights match what Google served: 500 renders as 400, 700 as 900.
+   ============================================================ */
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(../fonts/source-sans-pro-400.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(../fonts/source-sans-pro-600.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Source Sans Pro';
+  font-style: normal;
+  font-weight: 900;
+  font-display: swap;
+  src: url(../fonts/source-sans-pro-900.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ============================================================
    BASE
    ============================================================ */
 *, *::before, *::after {
@@ -9,8 +39,10 @@
 
 :root {
   --brand:       #141414;
-  --accent:      #339285;
-  --accent-hover:#2b7c71;
+  --accent:      #2b7c71;
+  --accent-hover:#236a60;
+  --accent-fill: #2b7c71; /* behind white text: 4.5:1 in both themes */
+  --accent-fill-hover:#236a60;
   --text:        #141414;
   --text-muted:  #6b7280;
   --text-faint:  #9ca3af;
@@ -49,7 +81,8 @@
 /* Dark mode — set by js/theme.js / applyTheme() from profiles.theme */
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --accent-hover:#3ba597;
+  --accent:      #3ba597; /* teal text and borders on dark surfaces */
+  --accent-hover:#45b3a4;
   --text:        #e8eaed;
   --text-muted:  #9aa3ae;
   --text-faint:  #6b7280;
@@ -158,13 +191,13 @@ body {
 }
 
 .auth-back a {
-  color: var(--text-faint);
+  color: var(--text-muted);
   text-decoration: none;
   transition: color 0.15s;
 }
 
 .auth-back a:hover {
-  color: var(--text-muted);
+  color: var(--text);
 }
 
 /* ============================================================
@@ -231,12 +264,12 @@ body {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--white);
   width: 100%;
 }
 
-.btn-primary:hover  { background: var(--accent-hover); }
+.btn-primary:hover  { background: var(--accent-fill-hover); }
 .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
 
 /* ============================================================
@@ -318,7 +351,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-fill);
   border: 1.5px solid rgba(255,255,255,0.3);
   flex-shrink: 0;
   font-size: 0;
@@ -361,7 +394,7 @@ body {
 
 .nav-user-menu a:hover,
 .nav-user-menu button:hover {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--white);
 }
 
@@ -374,7 +407,7 @@ body {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--white);
   font-size: 0.75rem;
   font-weight: 700;
@@ -390,7 +423,7 @@ body {
 }
 
 .nav-avatar:hover {
-  background: var(--accent-hover);
+  background: var(--accent-fill-hover);
   border-color: rgba(255,255,255,0.6);
 }
 
@@ -428,7 +461,7 @@ body {
   transition: transform 0.15s;
 }
 
-.nav-theme-toggle[aria-checked="true"] .nav-switch        { background: var(--accent); }
+.nav-theme-toggle[aria-checked="true"] .nav-switch        { background: var(--accent-fill); }
 .nav-theme-toggle[aria-checked="true"] .nav-switch::after { transform: translateX(14px); }
 .nav-theme-toggle:hover .nav-switch                       { box-shadow: 0 0 0 1.5px rgba(255,255,255,0.6); }
 
@@ -488,8 +521,8 @@ body {
 }
 
 .pill:has(input:checked) {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--white);
 }
 
@@ -686,7 +719,7 @@ body {
 
 .progress-fill {
   height: 100%;
-  background: var(--accent);
+  background: var(--accent-fill);
   border-radius: 999px;
   width: 0%;
   transition: width 0.2s ease;
@@ -754,6 +787,8 @@ body {
   margin-bottom: 1.5rem;
 }
 
+.filter-bar[hidden] { display: none; }
+
 .filter-pill {
   padding: 0.375rem 0.875rem;
   border: 1px solid var(--border);
@@ -772,8 +807,8 @@ body {
 }
 
 .filter-pill.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--white);
 }
 
@@ -1078,7 +1113,7 @@ body {
 }
 
 .admin-tab.active {
-  background: var(--accent);
+  background: var(--accent-fill);
   color: var(--white);
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
@@ -1108,8 +1143,8 @@ body {
 }
 
 .admin-videos-toolbar .btn-sm.active {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--white);
 }
 
@@ -1651,8 +1686,8 @@ select.edit-inline {
 }
 
 .bulk-pill:has(input:checked) {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--accent-fill);
+  border-color: var(--accent-fill);
   color: var(--white);
 }
 

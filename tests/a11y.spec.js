@@ -16,8 +16,15 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
 
 const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'];
 
+// Excluded: the YouTube / Instagram player inside .embed-frame. Its markup is
+// the platform's, not ours, and it changes without notice (2026-11-09 CI:
+// aria-prohibited-attr on YouTube's #movie_player). axe's exclude also skips
+// the iframe element itself, so its title is not checked here.
 async function expectNoViolations(page, label) {
-  const { violations } = await new AxeBuilder({ page }).withTags(WCAG).analyze();
+  const { violations } = await new AxeBuilder({ page })
+    .withTags(WCAG)
+    .exclude('.embed-frame iframe')
+    .analyze();
   const summary = violations.map(v =>
     `${v.id} (${v.impact}): ${v.help}\n` +
     v.nodes.slice(0, 5).map(n => `    ${n.target.join(' ')}`).join('\n'));
@@ -56,7 +63,10 @@ test.describe('coach', () => {
 
     test(`movement page has no WCAG A/AA violations (${theme})`, async ({ page }) => {
       await page.goto('/catalog.html');
-      const card = page.locator('.movement-card').first();
+      // A real movement, never a __test_*__ fixture: movement.spec.js creates
+      // and deletes those on the other worker, so the first card could vanish
+      // mid-test (2026-11-09 CI: #edit-btn never appeared on the retry).
+      const card = page.locator('.movement-card').filter({ hasNotText: '__test' }).first();
       await expect(card).toBeVisible({ timeout: 15000 });
       await card.click();
       await page.waitForURL('**/movement.html**');

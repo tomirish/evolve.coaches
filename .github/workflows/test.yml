@@ -70,12 +70,16 @@ jobs:
           done
           exit 1
 
-      - uses: 1password/install-cli-action@1a3160d5e9de1ae0803eaa08a88746f5ae3daa50 # @v4.1.0
-
+      # The four test logins are GitHub Actions secrets (dev.tools security
+      # programme D25, 2026-11-23): no 1Password token in GitHub. Local runs
+      # still use `npm test`, which injects them from 1Password (.env.op).
       - name: Run tests
         env:
-          OP_SERVICE_ACCOUNT_TOKEN: ${{ secrets.OP_SERVICE_ACCOUNT_TOKEN }}
-        run: npm test
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          COACH_EMAIL: ${{ secrets.COACH_EMAIL }}
+          COACH_PASSWORD: ${{ secrets.COACH_PASSWORD }}
+        run: npx playwright test
 
   deploy:
     needs: test

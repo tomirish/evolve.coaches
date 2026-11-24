@@ -170,7 +170,7 @@ Run through the auth/ownership checklist above for every new or modified Edge Fu
 
 ### Mac
 - `npm install` to get dependencies
-- `npm test` to run the full Playwright suite (uses `op run` to inject secrets from 1Password)
+- `npm test` to run the full Playwright suite (uses `op run` to inject secrets from 1Password; CI instead reads the same four test logins from GitHub Actions secrets — `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `COACH_EMAIL`, `COACH_PASSWORD` — and runs `npx playwright test`. Rotate a test login: update 1Password and the matching secret)
 - `python3 -m http.server 8080` to preview the site — **kill it when done** (`kill $(lsof -ti :8080)`); leaving it running exposes the repo to the LAN
 - `/commit` to create a commit — uses commit-commands plugin to auto-generate a message matching repo style
 

@@ -8,7 +8,7 @@ evolve.coaches is a private video library for a small team of coaches. The attac
 - Role-based access control (admin vs. coach) enforced via RLS and Edge Functions
 - Video upload and storage (Cloudflare R2, presigned URLs via Supabase Edge Functions)
 - Admin functions: user invite, user deletion, tag management
-- The CI/CD pipeline (GitHub Actions, 1Password CLI)
+- The CI/CD pipeline (GitHub Actions; test logins as Actions secrets)
 - Third-party dependencies (`package.json`)
 
 ## Supported versions

@@ -39,7 +39,7 @@ npm test          # headless
 npm run test:ui   # headed / interactive
 ```
 
-Tests run against a local Python HTTP server with real Supabase credentials injected via 1Password CLI. Local runs are optional — CI is the safety net. Run locally before pushing only for significant changes (auth, nav, anything that affects every page).
+Tests run against a local Python HTTP server with real Supabase test logins: locally injected via 1Password CLI (`npm test`), in CI from GitHub Actions secrets. Local runs are optional — CI is the safety net. Run locally before pushing only for significant changes (auth, nav, anything that affects every page).
 
 ### Git workflow
 - **All work goes to `main`** — there is no develop branch

@@ -25,7 +25,7 @@ Deno.serve(async (req) => {
     // Verify caller is an admin using their JWT
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
+      JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS')!).default,
       { global: { headers: { Authorization: authHeader } } }
     )
 
@@ -50,10 +50,10 @@ Deno.serve(async (req) => {
       })
     }
 
-    // Use service role key for privileged operations
+    // Use the secret key (bypasses RLS) for privileged operations
     const adminClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!,
+      JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS')!).default,
     )
 
     const { data: { users }, error: listError } = await adminClient.auth.admin.listUsers()

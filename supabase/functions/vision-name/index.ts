@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     // Verify the caller is authenticated
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_ANON_KEY')!,
+      JSON.parse(Deno.env.get('SUPABASE_PUBLISHABLE_KEYS')!).default,
       { global: { headers: { Authorization: authHeader } } }
     )
 

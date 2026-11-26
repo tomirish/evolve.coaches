@@ -1,5 +1,5 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { S3Client, PutObjectCommand } from "npm:@aws-sdk/client-s3";
+import { S3Client, PutObjectCommand, HeadObjectCommand } from "npm:@aws-sdk/client-s3";
 import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
@@ -65,6 +65,34 @@ Deno.serve(async (req: Request) => {
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.[a-z0-9]+$/i.test(filename)) {
     return new Response(JSON.stringify({ error: "Invalid filename" }), {
       status: 400,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+
+  // Never sign a PUT over an object that already exists: an existing video's
+  // key is also a valid UUID name, so without this any signed-in coach could
+  // overwrite someone else's video (found 2026-11-25). The site always picks a
+  // new random UUID, so a real upload never lands here.
+  // The check is a signed HEAD sent with Deno's own fetch, NOT r2.send(new
+  // HeadObjectCommand(...)): under Supabase's runtime the SDK's node:http shim
+  // crashes the worker ("event loop error: unexpected end of file", HTTP 503)
+  // when R2 answers 404 with an empty body, i.e. on every real upload.
+  const headUrl = await getSignedUrl(
+    r2,
+    new HeadObjectCommand({ Bucket: BUCKET, Key: filename }),
+    { expiresIn: 60 }
+  );
+  const head = await fetch(headUrl, { method: "HEAD" });
+  if (head.status === 200) {
+    return new Response(JSON.stringify({ error: "File already exists" }), {
+      status: 409,
+      headers: { ...CORS, "Content-Type": "application/json" },
+    });
+  }
+  if (head.status !== 404) {
+    console.error("r2-upload-url: existence check failed", head.status);
+    return new Response(JSON.stringify({ error: "Could not check the file" }), {
+      status: 502,
       headers: { ...CORS, "Content-Type": "application/json" },
     });
   }

@@ -58,6 +58,38 @@ test.describe('Edge Function security boundaries', () => {
     expect(res.status()).toBe(400);
   });
 
+  test('r2-upload-url refuses a filename that is not a fresh UUID name', async ({ request }) => {
+    for (const filename of ['../evil.mp4', 'video.mp4', '00000000-0000-0000-0000-000000000002.mp4/x']) {
+      const res = await request.post(`${EDGE_BASE}/r2-upload-url`, {
+        headers: { Authorization: `Bearer ${coachToken}`, 'Content-Type': 'application/json' },
+        data: { filename },
+      });
+      expect(res.status(), filename).toBe(400);
+    }
+  });
+
+  test('coach cannot get an upload URL over an existing video', async ({ request }) => {
+    // Any real stored video will do: the point is that its key already exists in R2.
+    const { data } = await adminClient.from('movements').select('video_path')
+      .not('video_path', 'is', null).neq('video_path', '00000000-0000-0000-0000-000000000002.mp4')
+      .limit(1).single();
+    test.skip(!data, 'no stored video in the library to aim at');
+    const res = await request.post(`${EDGE_BASE}/r2-upload-url`, {
+      headers: { Authorization: `Bearer ${coachToken}`, 'Content-Type': 'application/json' },
+      data: { filename: data.video_path },
+    });
+    expect(res.status()).toBe(409);
+  });
+
+  test('coach can still get an upload URL for a new UUID name', async ({ request }) => {
+    const res = await request.post(`${EDGE_BASE}/r2-upload-url`, {
+      headers: { Authorization: `Bearer ${coachToken}`, 'Content-Type': 'application/json' },
+      data: { filename: `${crypto.randomUUID()}.mp4` },
+    });
+    expect(res.status()).toBe(200);
+    expect((await res.json()).uploadUrl).toContain('X-Amz-Signature');
+  });
+
   test('coach cannot list users', async ({ request }) => {
     const res = await request.post(`${EDGE_BASE}/list-users`, {
       headers: { Authorization: `Bearer ${coachToken}`, 'Content-Type': 'application/json' },

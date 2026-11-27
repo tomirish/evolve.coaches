@@ -1,20 +1,5 @@
 # evolve.coaches — Project Notes
 
-## Session start
-When working in this repo, the global MEMORY.md is not auto-loaded. Read it manually at the start of each session:
-`~/.claude/projects/-Users-tom-github/memory/MEMORY.md`
-Then read any topic files referenced in it — they contain important context.
-
----
-
-## Specs and plans
-
-Design specs go in `docs/superpowers/specs/`, implementation plans in `docs/superpowers/plans/`. Committed to the repo, not gitignored. Same convention in every repo.
-
-Specs are the *why* and are kept. Plans are the *how, once* — prune them once implemented; the code plus the commit message is the durable record.
-
----
-
 ## Branching
 
 **`main` is the only branch — commit and push there directly.** Don't open PRs and don't create feature branches for ordinary work. There is no develop branch.
